@@ -396,6 +396,28 @@
     </div>
   </div>
 
+  <!-- Ultra-Premium Custom Input Prompt Modal (Replaces Native browser prompt) -->
+  <div class="modal-overlay hidden" id="customPromptModal">
+    <div class="modal-card custom-prompt-card">
+      <div class="modal-header">
+        <h3 id="promptModalTitle"><i class="fa-brands fa-facebook" style="color: var(--fb-blue);"></i> Facebook App ID Required</h3>
+        <button class="modal-close-btn" id="closePromptModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="promptModalDesc" class="prompt-desc">Pabbly / n8n Direct OAuth login ke liye kripya apna Meta App ID enter karein:</p>
+        <div class="form-group mt-3">
+          <label for="promptInputVal"><i class="fa-solid fa-cubes"></i> Meta App ID</label>
+          <input type="text" id="promptInputVal" placeholder="e.g. 123456789012345">
+          <small class="help-text">Agar App ID nahi hai, toh developers.facebook.com par App banayein.</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelPromptModalBtn">Cancel</button>
+        <button class="btn btn-primary" id="submitPromptModalBtn"><i class="fa-solid fa-arrow-right"></i> Continue OAuth Connect</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Premium Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
 

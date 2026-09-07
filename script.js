@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
  * FACEBOOK AUTOMATION DASHBOARD PRO - JAVASCRIPT LOGIC (script.js)
- * Collapsible Sidebar, Toast Notifications, Direct OAuth Connect & Interactive Workflow Canvas
+ * Collapsible Sidebar, Toast Engine, Ultra-Premium Custom Modals, Direct OAuth Connect
  * ==============================================================================
  */
 
@@ -44,13 +44,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const cfgFbToken = document.getElementById('cfgFbToken');
   const cfgSheetId = document.getElementById('cfgSheetId');
 
-  // Modal Elements
+  // Node Modal Elements
   const nodeModal = document.getElementById('nodeModal');
   const modalTitle = document.getElementById('modalTitle');
   const modalBody = document.getElementById('modalBody');
   const closeModalBtn = document.getElementById('closeModalBtn');
   const cancelModalBtn = document.getElementById('cancelModalBtn');
   const saveModalBtn = document.getElementById('saveModalBtn');
+
+  // Custom Prompt Input Modal Elements (Replaces native browser prompt)
+  const customPromptModal = document.getElementById('customPromptModal');
+  const promptModalTitle = document.getElementById('promptModalTitle');
+  const promptModalDesc = document.getElementById('promptModalDesc');
+  const promptInputVal = document.getElementById('promptInputVal');
+  const closePromptModalBtn = document.getElementById('closePromptModalBtn');
+  const cancelPromptModalBtn = document.getElementById('cancelPromptModalBtn');
+  const submitPromptModalBtn = document.getElementById('submitPromptModalBtn');
 
   // Status & Preview
   const statusBox = document.getElementById('statusBox');
@@ -69,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const DEFAULT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxQ-vbzy60GwVdAzpiF_Hq4-AOsrpEnQdWdFKJdaEXcrcOadGM9O47CPYxl0ENnaygF/exec';
 
   let currentActiveNode = null;
+  let promptCallback = null;
 
   // 1. SIDEBAR TOGGLE & NAV HANDLERS
   const isSidebarCollapsed = localStorage.getItem(STORAGE_KEY_SIDEBAR) === 'true';
@@ -143,7 +153,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 4500);
   }
 
-  // 3. INITIALIZE SAVED DATA
+  // 3. ULTRA-PREMIUM CUSTOM PROMPT MODAL (Replaces native browser prompt)
+  function openCustomPrompt(title, desc, placeholder, initialVal, onConfirm) {
+    promptModalTitle.innerHTML = `<i class="fa-brands fa-facebook" style="color: var(--fb-blue);"></i> ${escapeHtml(title)}`;
+    promptModalDesc.textContent = desc;
+    promptInputVal.placeholder = placeholder || '';
+    promptInputVal.value = initialVal || '';
+    promptCallback = onConfirm;
+
+    customPromptModal.classList.remove('hidden');
+    setTimeout(() => promptInputVal.focus(), 100);
+  }
+
+  function closeCustomPrompt() {
+    customPromptModal.classList.add('hidden');
+    promptCallback = null;
+  }
+
+  closePromptModalBtn.addEventListener('click', closeCustomPrompt);
+  cancelPromptModalBtn.addEventListener('click', closeCustomPrompt);
+
+  submitPromptModalBtn.addEventListener('click', () => {
+    const val = promptInputVal.value.trim();
+    if (promptCallback) promptCallback(val);
+    closeCustomPrompt();
+  });
+
+  promptInputVal.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') {
+      submitPromptModalBtn.click();
+    }
+  });
+
+  // 4. INITIALIZE SAVED DATA
   const savedUrl = localStorage.getItem(STORAGE_KEY_WEBAPP);
   if (savedUrl) {
     webAppUrlInput.value = savedUrl;
@@ -221,23 +263,33 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleConfigBtn.classList.toggle('active');
   });
 
-  // 4. FACEBOOK DIRECT CONNECT HANDLER
+  // 5. FACEBOOK DIRECT OAUTH CONNECT HANDLER (Using Custom Modal)
   fbLoginBtn.addEventListener('click', handlePabblyFbConnect);
 
   function handlePabblyFbConnect() {
     let appId = cfgFbAppId.value.trim();
 
     if (!appId) {
-      const userPromptAppId = prompt("Direct OAuth login ke liye kripya apna Meta App ID enter karein:\n\n(Agar App ID nahi hai, toh developers.facebook.com par App banayein)");
-      if (userPromptAppId && userPromptAppId.trim()) {
-        appId = userPromptAppId.trim();
-        cfgFbAppId.value = appId;
-      } else {
-        showToast('App ID Required', 'Facebook Direct Login ke liye Meta App ID enter karein.', 'warning');
-        return;
-      }
+      openCustomPrompt(
+        "Facebook App ID Required",
+        "Direct OAuth login ke liye kripya apna Meta App ID enter karein:",
+        "e.g. 123456789012345",
+        "",
+        (enteredAppId) => {
+          if (enteredAppId && enteredAppId.trim()) {
+            cfgFbAppId.value = enteredAppId.trim();
+            launchFbOAuthPopup(enteredAppId.trim());
+          } else {
+            showToast('App ID Required', 'Facebook Direct Login ke liye Meta App ID zaroori hai.', 'warning');
+          }
+        }
+      );
+    } else {
+      launchFbOAuthPopup(appId);
     }
+  }
 
+  function launchFbOAuthPopup(appId) {
     const redirectUri = window.location.origin + window.location.pathname;
     const scope = 'pages_manage_posts,pages_read_engagement,pages_show_list';
     const oauthUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
@@ -331,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Facebook Page Connected', `Page ID ${pageId} successfully saved!`, 'success');
   }
 
-  // 5. CLICKABLE WORKFLOW NODES & CONFIGURATION MODAL
+  // 6. CLICKABLE WORKFLOW NODES & CONFIGURATION MODAL
   document.querySelectorAll('.wf-node.clickable').forEach(node => {
     node.addEventListener('click', () => {
       const nodeType = node.getAttribute('data-node');
@@ -524,12 +576,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 6. Fetch Logs automatically on page load
+  // 7. Fetch Logs automatically on page load
   if (webAppUrlInput.value.trim()) {
     fetchLogs();
   }
 
-  // 7. Automation Execution & Workflow Node Animation
+  // 8. Automation Execution & Workflow Node Animation
   generateBtn.addEventListener('click', async () => {
     const webAppUrl = webAppUrlInput.value.trim();
     const topic = topicInput.value.trim();
