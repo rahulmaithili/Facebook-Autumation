@@ -36,17 +36,20 @@
       </div>
     </header>
 
-    <!-- Visual Automation Workflow Diagram (Pabbly Connect Style) -->
+    <!-- Visual Automation Workflow Diagram (Pabbly Connect Style - CLICKABLE NODES) -->
     <section class="card workflow-card mb-4">
       <div class="card-header flex-between">
-        <h2><i class="fa-solid fa-diagram-project"></i> Live Automation Workflow Pipeline</h2>
-        <span class="badge badge-info"><i class="fa-solid fa-bolt"></i> Interactive Flow</span>
+        <div>
+          <h2><i class="fa-solid fa-diagram-project"></i> Live Automation Workflow Pipeline</h2>
+          <small class="help-text">💡 Step par click karke uski custom settings configure karein!</small>
+        </div>
+        <span class="badge badge-info"><i class="fa-solid fa-hand-pointer"></i> Click Any Node to Customize</span>
       </div>
       <div class="card-body">
         <div class="workflow-canvas">
           
-          <!-- Node 1: Trigger -->
-          <div class="wf-node" id="node-trigger">
+          <!-- Node 1: Trigger (Clickable) -->
+          <div class="wf-node clickable" id="node-trigger" data-node="trigger">
             <div class="wf-icon-box green">
               <i class="fa-solid fa-calendar-check"></i>
             </div>
@@ -55,14 +58,15 @@
               <p>Manual or Time-Driven Cron</p>
             </div>
             <div class="wf-status-badge idle">Ready</div>
+            <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
           </div>
 
           <div class="wf-line">
             <div class="line-progress"></div>
           </div>
 
-          <!-- Node 2: Gemini Text AI -->
-          <div class="wf-node" id="node-gemini">
+          <!-- Node 2: Gemini Text AI (Clickable) -->
+          <div class="wf-node clickable" id="node-gemini" data-node="gemini">
             <div class="wf-icon-box blue">
               <i class="fa-solid fa-brain"></i>
             </div>
@@ -71,14 +75,15 @@
               <p>Generate Post Caption</p>
             </div>
             <div class="wf-status-badge idle">Idle</div>
+            <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
           </div>
 
           <div class="wf-line">
             <div class="line-progress"></div>
           </div>
 
-          <!-- Node 3: Google Imagen Image AI -->
-          <div class="wf-node" id="node-imagen">
+          <!-- Node 3: Google Imagen Image AI (Clickable) -->
+          <div class="wf-node clickable" id="node-imagen" data-node="imagen">
             <div class="wf-icon-box purple">
               <i class="fa-solid fa-image"></i>
             </div>
@@ -87,14 +92,15 @@
               <p>Generate Visual Artwork</p>
             </div>
             <div class="wf-status-badge idle">Idle</div>
+            <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
           </div>
 
           <div class="wf-line">
             <div class="line-progress"></div>
           </div>
 
-          <!-- Node 4: Facebook Page -->
-          <div class="wf-node" id="node-facebook">
+          <!-- Node 4: Facebook Page (Clickable) -->
+          <div class="wf-node clickable" id="node-facebook" data-node="facebook">
             <div class="wf-icon-box fb-blue">
               <i class="fa-brands fa-facebook"></i>
             </div>
@@ -103,14 +109,15 @@
               <p>Publish Photo Post</p>
             </div>
             <div class="wf-status-badge idle">Idle</div>
+            <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
           </div>
 
           <div class="wf-line">
             <div class="line-progress"></div>
           </div>
 
-          <!-- Node 5: Google Sheets -->
-          <div class="wf-node" id="node-sheets">
+          <!-- Node 5: Google Sheets (Clickable) -->
+          <div class="wf-node clickable" id="node-sheets" data-node="sheets">
             <div class="wf-icon-box sheet-green">
               <i class="fa-solid fa-table"></i>
             </div>
@@ -119,6 +126,7 @@
               <p>Log Execution Entry</p>
             </div>
             <div class="wf-status-badge idle">Idle</div>
+            <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
           </div>
 
         </div>
@@ -297,6 +305,23 @@
     <footer class="main-footer">
       <p>Facebook Automation Dashboard &bull; Powered by Google Gemini AI & Apps Script</p>
     </footer>
+  </div>
+
+  <!-- Interactive Node Customization Modal -->
+  <div class="modal-overlay hidden" id="nodeModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle"><i class="fa-solid fa-gear"></i> Configure Step Settings</h3>
+        <button class="modal-close-btn" id="closeModalBtn">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Dynamic Node Settings Content Loaded via JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelModalBtn">Cancel</button>
+        <button class="btn btn-primary" id="saveModalBtn"><i class="fa-solid fa-check"></i> Save Step Settings</button>
+      </div>
+    </div>
   </div>
 
   <!-- Facebook SDK for JS -->
