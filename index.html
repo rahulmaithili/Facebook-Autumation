@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Facebook Automation Dashboard</title>
+  <title>Facebook Automation Dashboard Pro</title>
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,300 +12,371 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="sidebar-expanded">
 
-  <div class="app-container">
-    <!-- Header -->
-    <header class="main-header">
-      <div class="logo-area">
-        <div class="fb-icon-box">
-          <i class="fa-brands fa-facebook-f"></i>
+  <div class="layout-wrapper">
+
+    <!-- Collapsible Premium Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <div class="fb-icon-box small">
+            <i class="fa-brands fa-facebook-f"></i>
+          </div>
+          <span class="brand-name">FB Automation</span>
         </div>
-        <div>
-          <h1>Facebook Automation Dashboard</h1>
-          <p class="subtitle">AI Content & Image Generation with Automatic Facebook Page Publishing</p>
-        </div>
-      </div>
-      <div class="header-actions">
-        <button id="toggleConfigBtn" class="btn btn-outline">
-          <i class="fa-solid fa-key"></i> API Keys & Credentials
+        <button id="sidebarToggleBtn" class="sidebar-toggle-btn" title="Toggle Sidebar">
+          <i class="fa-solid fa-chevron-left"></i>
         </button>
-        <div class="status-badge" id="systemStatus">
-          <span class="dot pulse"></span> Web App Ready
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">MAIN MENU</div>
+        
+        <a href="#workflow-section" class="nav-item active" id="navWorkflow">
+          <i class="fa-solid fa-diagram-project"></i>
+          <span class="nav-label">Workflow Canvas</span>
+        </a>
+
+        <a href="#controls-section" class="nav-item" id="navQuickLinks">
+          <i class="fa-solid fa-bolt"></i>
+          <span class="nav-label">Quick Actions</span>
+        </a>
+
+        <a href="#logs-section" class="nav-item" id="navLogs">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span class="nav-label">Logs History</span>
+        </a>
+
+        <div class="nav-section-title">SETTINGS</div>
+
+        <a href="#configPanel" class="nav-item" id="navSettings">
+          <i class="fa-solid fa-sliders"></i>
+          <span class="nav-label">System Settings</span>
+        </a>
+
+        <a href="#google-settings" class="nav-item" id="navGoogleSettings">
+          <i class="fa-solid fa-file-excel"></i>
+          <span class="nav-label">Google Sheet Setup</span>
+        </a>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="nav-section-title">ACCOUNT</div>
+
+        <div class="nav-item auth-nav-item" id="navFbAuth">
+          <i class="fa-brands fa-facebook"></i>
+          <span class="nav-label" id="fbAuthLabel">FB Disconnected</span>
+          <button id="fbAuthActionBtn" class="auth-btn btn-login" title="Login / Logout">Login</button>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-card">
+          <div class="avatar"><i class="fa-solid fa-user-shield"></i></div>
+          <div class="user-info">
+            <span class="user-name">Pro Dashboard</span>
+            <span class="user-role">v2.0 Connected</span>
+          </div>
         </div>
       </div>
-    </header>
+    </aside>
 
-    <!-- Visual Automation Workflow Diagram (Pabbly / n8n Style - CLICKABLE NODES) -->
-    <section class="card workflow-card mb-4">
-      <div class="card-header flex-between">
-        <div>
-          <h2><i class="fa-solid fa-diagram-project"></i> Live Automation Workflow Pipeline</h2>
-          <small class="help-text">💡 Step par click karke uski custom settings configure karein!</small>
-        </div>
-        <span class="badge badge-info"><i class="fa-solid fa-hand-pointer"></i> Click Any Node to Customize</span>
-      </div>
-      <div class="card-body">
-        <div class="workflow-canvas">
-          
-          <!-- Node 1: Trigger (Clickable) -->
-          <div class="wf-node clickable" id="node-trigger" data-node="trigger">
-            <div class="wf-icon-box green">
-              <i class="fa-solid fa-calendar-check"></i>
-            </div>
-            <div class="wf-content">
-              <h4>1. Trigger / Schedule</h4>
-              <p>Manual or Time-Driven Cron</p>
-            </div>
-            <div class="wf-status-badge idle">Ready</div>
-            <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
-          </div>
-
-          <div class="wf-line">
-            <div class="line-progress"></div>
-          </div>
-
-          <!-- Node 2: Gemini Text AI (Clickable) -->
-          <div class="wf-node clickable" id="node-gemini" data-node="gemini">
-            <div class="wf-icon-box blue">
-              <i class="fa-solid fa-brain"></i>
-            </div>
-            <div class="wf-content">
-              <h4>2. Gemini 2.0 Flash</h4>
-              <p>Generate Post Caption</p>
-            </div>
-            <div class="wf-status-badge idle">Idle</div>
-            <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
-          </div>
-
-          <div class="wf-line">
-            <div class="line-progress"></div>
-          </div>
-
-          <!-- Node 3: Google Imagen Image AI (Clickable) -->
-          <div class="wf-node clickable" id="node-imagen" data-node="imagen">
-            <div class="wf-icon-box purple">
-              <i class="fa-solid fa-image"></i>
-            </div>
-            <div class="wf-content">
-              <h4>3. Imagen 3 AI</h4>
-              <p>Generate Visual Artwork</p>
-            </div>
-            <div class="wf-status-badge idle">Idle</div>
-            <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
-          </div>
-
-          <div class="wf-line">
-            <div class="line-progress"></div>
-          </div>
-
-          <!-- Node 4: Facebook Page (Clickable) -->
-          <div class="wf-node clickable" id="node-facebook" data-node="facebook">
-            <div class="wf-icon-box fb-blue">
-              <i class="fa-brands fa-facebook"></i>
-            </div>
-            <div class="wf-content">
-              <h4>4. Facebook Page</h4>
-              <p>Publish Photo Post</p>
-            </div>
-            <div class="wf-status-badge idle">Idle</div>
-            <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
-          </div>
-
-          <div class="wf-line">
-            <div class="line-progress"></div>
-          </div>
-
-          <!-- Node 5: Google Sheets (Clickable) -->
-          <div class="wf-node clickable" id="node-sheets" data-node="sheets">
-            <div class="wf-icon-box sheet-green">
-              <i class="fa-solid fa-table"></i>
-            </div>
-            <div class="wf-content">
-              <h4>5. Google Sheets</h4>
-              <p>Log Execution Entry</p>
-            </div>
-            <div class="wf-status-badge idle">Idle</div>
-            <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Collapsible Credentials Panel -->
-    <section class="card config-panel-card hidden" id="configPanel">
-      <div class="card-header flex-between">
-        <h2><i class="fa-solid fa-sliders"></i> Custom API Credentials Setup</h2>
-        <span class="help-text">Pabbly / n8n Style Direct Facebook Connect!</span>
-      </div>
-      <div class="card-body">
-
-        <!-- Pabbly / n8n Style Direct OAuth Login Banner -->
-        <div class="fb-login-banner mb-4">
-          <div class="fb-login-info">
-            <h3><i class="fa-brands fa-facebook"></i> Direct Facebook Connect (Pabbly / n8n Style)</h3>
-            <p>Facebook account connect karke 1-click me Page ID aur Page Access Token automatic fetch karein.</p>
-          </div>
-          <div class="fb-login-action">
-            <button id="fbLoginBtn" class="btn btn-facebook">
-              <i class="fa-brands fa-facebook-f"></i> Connect Facebook Account
-            </button>
-          </div>
-        </div>
-
-        <!-- Page Selector Dropdown (Shown after FB Login) -->
-        <div id="pageSelectContainer" class="form-group span-2 hidden">
-          <label for="fbPageSelect"><i class="fa-solid fa-flag"></i> Select Facebook Page to Automate</label>
-          <select id="fbPageSelect" class="form-select">
-            <option value="">-- Choose Facebook Page --</option>
-          </select>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="credentials-grid">
-          <div class="form-group">
-            <label for="cfgFbAppId"><i class="fa-solid fa-cubes"></i> Facebook App ID</label>
-            <input type="text" id="cfgFbAppId" placeholder="Enter Meta App ID (e.g. 1234567890...)">
-            <small class="help-text">OAuth Popup Direct Login ke liye Meta App ID enter karein.</small>
-          </div>
-
-          <div class="form-group">
-            <label for="cfgGeminiKey"><i class="fa-solid fa-key"></i> Gemini API Key</label>
-            <div class="input-with-icon">
-              <input type="password" id="cfgGeminiKey" placeholder="AIzaSy...">
-              <button class="toggle-pwd-btn" data-target="cfgGeminiKey"><i class="fa-solid fa-eye"></i></button>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="cfgFbPageId"><i class="fa-solid fa-id-card"></i> Facebook Page ID</label>
-            <input type="text" id="cfgFbPageId" placeholder="100064529012345">
-          </div>
-
-          <div class="form-group span-2">
-            <label for="cfgFbToken"><i class="fa-solid fa-shield-halved"></i> Facebook Page Access Token</label>
-            <div class="input-with-icon">
-              <input type="password" id="cfgFbToken" placeholder="EAAX...">
-              <button class="toggle-pwd-btn" data-target="cfgFbToken"><i class="fa-solid fa-eye"></i></button>
-            </div>
-          </div>
-
-          <div class="form-group span-2">
-            <label for="cfgSheetId"><i class="fa-solid fa-file-excel"></i> Google Sheet Log ID</label>
-            <input type="text" id="cfgSheetId" value="1DfQmhNSSGV5dZnlI2-eD-V8-E0h5FJM7o1EoleNiA5OwMcNZY9UkG_sI">
-          </div>
-        </div>
-
-        <div class="flex-end gap-2 mt-3">
-          <button id="saveCredentialsBtn" class="btn btn-secondary">
-            <i class="fa-solid fa-floppy-disk"></i> Save Credentials to Backend
+    <!-- Main Content Area -->
+    <div class="main-content">
+      
+      <!-- Top Bar Header -->
+      <header class="main-header">
+        <div class="header-title-area">
+          <button id="mobileSidebarToggle" class="mobile-toggle-btn">
+            <i class="fa-solid fa-bars"></i>
           </button>
+          <div>
+            <h1>Facebook Automation Dashboard</h1>
+            <p class="subtitle">AI Content & Image Generation with Automatic Facebook Publishing</p>
+          </div>
         </div>
-      </div>
-    </section>
+        <div class="header-actions">
+          <button id="toggleConfigBtn" class="btn btn-outline">
+            <i class="fa-solid fa-key"></i> API Credentials
+          </button>
+          <div class="status-badge" id="systemStatus">
+            <span class="dot pulse"></span> Web App Ready
+          </div>
+        </div>
+      </header>
 
-    <!-- App Content Grid -->
-    <main class="dashboard-grid">
-
-      <!-- Left Column: Settings & Controls -->
-      <section class="card control-card">
-        <div class="card-header">
-          <h2><i class="fa-solid fa-link"></i> Web App Endpoint</h2>
+      <!-- Visual Automation Workflow Diagram Section -->
+      <section class="card workflow-card mb-4" id="workflow-section">
+        <div class="card-header flex-between">
+          <div>
+            <h2><i class="fa-solid fa-diagram-project"></i> Live Automation Workflow Pipeline</h2>
+            <small class="help-text">💡 Step par click karke uski custom settings configure karein!</small>
+          </div>
+          <span class="badge badge-info"><i class="fa-solid fa-hand-pointer"></i> Click Any Node to Customize</span>
         </div>
         <div class="card-body">
-          <div class="form-group">
-            <label for="webAppUrl"><i class="fa-solid fa-server"></i> Apps Script Web App URL</label>
-            <input type="url" id="webAppUrl" value="https://script.google.com/macros/s/AKfycbxQ-vbzy60GwVdAzpiF_Hq4-AOsrpEnQdWdFKJdaEXcrcOadGM9O47CPYxl0ENnaygF/exec" placeholder="https://script.google.com/macros/s/.../exec" required>
-            <small class="help-text">Google Apps Script se deploy hua Web App URL yahan auto-filled hai.</small>
+          <div class="workflow-canvas">
+            
+            <!-- Node 1: Trigger -->
+            <div class="wf-node clickable" id="node-trigger" data-node="trigger">
+              <div class="wf-icon-box green">
+                <i class="fa-solid fa-calendar-check"></i>
+              </div>
+              <div class="wf-content">
+                <h4>1. Trigger / Schedule</h4>
+                <p>Manual or Time-Driven Cron</p>
+              </div>
+              <div class="wf-status-badge idle">Ready</div>
+              <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
+            </div>
+
+            <div class="wf-line">
+              <div class="line-progress"></div>
+            </div>
+
+            <!-- Node 2: Gemini Text AI -->
+            <div class="wf-node clickable" id="node-gemini" data-node="gemini">
+              <div class="wf-icon-box blue">
+                <i class="fa-solid fa-brain"></i>
+              </div>
+              <div class="wf-content">
+                <h4>2. Gemini 2.0 Flash</h4>
+                <p>Generate Post Caption</p>
+              </div>
+              <div class="wf-status-badge idle">Idle</div>
+              <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
+            </div>
+
+            <div class="wf-line">
+              <div class="line-progress"></div>
+            </div>
+
+            <!-- Node 3: Google Imagen Image AI -->
+            <div class="wf-node clickable" id="node-imagen" data-node="imagen">
+              <div class="wf-icon-box purple">
+                <i class="fa-solid fa-image"></i>
+              </div>
+              <div class="wf-content">
+                <h4>3. Imagen 3 AI</h4>
+                <p>Generate Visual Artwork</p>
+              </div>
+              <div class="wf-status-badge idle">Idle</div>
+              <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
+            </div>
+
+            <div class="wf-line">
+              <div class="line-progress"></div>
+            </div>
+
+            <!-- Node 4: Facebook Page -->
+            <div class="wf-node clickable" id="node-facebook" data-node="facebook">
+              <div class="wf-icon-box fb-blue">
+                <i class="fa-brands fa-facebook"></i>
+              </div>
+              <div class="wf-content">
+                <h4>4. Facebook Page</h4>
+                <p>Publish Photo Post</p>
+              </div>
+              <div class="wf-status-badge idle">Idle</div>
+              <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
+            </div>
+
+            <div class="wf-line">
+              <div class="line-progress"></div>
+            </div>
+
+            <!-- Node 5: Google Sheets -->
+            <div class="wf-node clickable" id="node-sheets" data-node="sheets">
+              <div class="wf-icon-box sheet-green">
+                <i class="fa-solid fa-table"></i>
+              </div>
+              <div class="wf-content">
+                <h4>5. Google Sheets</h4>
+                <p>Log Execution Entry</p>
+              </div>
+              <div class="wf-status-badge idle">Idle</div>
+              <span class="edit-node-hint"><i class="fa-solid fa-gear"></i> Configure</span>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Collapsible Credentials Panel -->
+      <section class="card config-panel-card hidden mb-4" id="configPanel">
+        <div class="card-header flex-between">
+          <h2><i class="fa-solid fa-sliders"></i> System Settings & Credentials</h2>
+          <span class="help-text">Pabbly / n8n Style Direct Facebook Connect!</span>
+        </div>
+        <div class="card-body">
+
+          <!-- Pabbly / n8n Style Direct OAuth Login Banner -->
+          <div class="fb-login-banner mb-4">
+            <div class="fb-login-info">
+              <h3><i class="fa-brands fa-facebook"></i> Direct Facebook Connect</h3>
+              <p>Facebook account connect karke 1-click me Page ID aur Page Access Token automatic fetch karein.</p>
+            </div>
+            <div class="fb-login-action">
+              <button id="fbLoginBtn" class="btn btn-facebook">
+                <i class="fa-brands fa-facebook-f"></i> Connect Facebook Account
+              </button>
+            </div>
+          </div>
+
+          <!-- Page Selector Dropdown (Shown after FB Login) -->
+          <div id="pageSelectContainer" class="form-group span-2 hidden">
+            <label for="fbPageSelect"><i class="fa-solid fa-flag"></i> Select Facebook Page to Automate</label>
+            <select id="fbPageSelect" class="form-select">
+              <option value="">-- Choose Facebook Page --</option>
+            </select>
           </div>
 
           <div class="divider"></div>
 
-          <div class="card-header p-0">
-            <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Create New Facebook Post</h2>
-          </div>
-          
-          <div class="form-group mt-3">
-            <label for="topicInput"><i class="fa-solid fa-lightbulb"></i> Post Topic (Optional)</label>
-            <input type="text" id="topicInput" placeholder="e.g. Funny / Relatable Animal Images, Tech Tips...">
-            <small class="help-text">Agar aap topic blank chhodenge toh AI automatic trending topic choose karega.</small>
+          <div class="credentials-grid" id="google-settings">
+            <div class="form-group">
+              <label for="cfgFbAppId"><i class="fa-solid fa-cubes"></i> Facebook App ID</label>
+              <input type="text" id="cfgFbAppId" placeholder="Enter Meta App ID (e.g. 1234567890...)">
+            </div>
+
+            <div class="form-group">
+              <label for="cfgGeminiKey"><i class="fa-solid fa-key"></i> Gemini API Key</label>
+              <div class="input-with-icon">
+                <input type="password" id="cfgGeminiKey" placeholder="AIzaSy...">
+                <button class="toggle-pwd-btn" data-target="cfgGeminiKey"><i class="fa-solid fa-eye"></i></button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="cfgFbPageId"><i class="fa-solid fa-id-card"></i> Facebook Page ID</label>
+              <input type="text" id="cfgFbPageId" placeholder="100064529012345">
+            </div>
+
+            <div class="form-group span-2">
+              <label for="cfgFbToken"><i class="fa-solid fa-shield-halved"></i> Facebook Page Access Token</label>
+              <div class="input-with-icon">
+                <input type="password" id="cfgFbToken" placeholder="EAAX...">
+                <button class="toggle-pwd-btn" data-target="cfgFbToken"><i class="fa-solid fa-eye"></i></button>
+              </div>
+            </div>
+
+            <div class="form-group span-2">
+              <label for="cfgSheetId"><i class="fa-solid fa-file-excel"></i> Google Sheet Log ID Setup</label>
+              <input type="text" id="cfgSheetId" value="1DfQmhNSSGV5dZnlI2-eD-V8-E0h5FJM7o1EoleNiA5OwMcNZY9UkG_sI">
+            </div>
           </div>
 
-          <button id="generateBtn" class="btn btn-primary btn-block btn-lg">
-            <i class="fa-solid fa-paper-plane"></i> Generate & Post Now
-          </button>
-        </div>
-      </section>
-
-      <!-- Right Column: Live Status & Output -->
-      <section class="card status-card">
-        <div class="card-header">
-          <h2><i class="fa-solid fa-chart-line"></i> Execution Status</h2>
-        </div>
-        <div class="card-body">
-          <div id="statusBox" class="status-box idle">
-            <div class="status-icon">
-              <i class="fa-solid fa-circle-info"></i>
-            </div>
-            <div class="status-details">
-              <h3 id="statusTitle">Ready for Automation</h3>
-              <p id="statusMessage">Topic enter karein aur "Generate & Post Now" par click karein.</p>
-            </div>
-          </div>
-
-          <!-- Generated Content Preview Box (Hidden initially) -->
-          <div id="resultPreview" class="result-preview hidden">
-            <div class="preview-header">
-              <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Published</span>
-              <span class="post-id-badge" id="previewPostId">Post ID: -</span>
-            </div>
-            <div class="preview-body">
-              <label><i class="fa-solid fa-align-left"></i> Generated Caption:</label>
-              <pre id="previewCaption" class="caption-text"></pre>
-            </div>
+          <div class="flex-end gap-2 mt-3">
+            <button id="saveCredentialsBtn" class="btn btn-secondary">
+              <i class="fa-solid fa-floppy-disk"></i> Save Credentials to Backend
+            </button>
           </div>
         </div>
       </section>
 
-      <!-- Full Width Row: Automation Logs -->
-      <section class="card logs-card">
-        <div class="card-header flex-between">
-          <h2><i class="fa-solid fa-clock-rotate-left"></i> Execution Logs (Google Sheets)</h2>
-          <button id="refreshLogsBtn" class="btn btn-secondary">
-            <i class="fa-solid fa-rotate-right"></i> Refresh Logs
-          </button>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="logs-table">
-              <thead>
-                <tr>
-                  <th style="width: 180px;">Time</th>
-                  <th style="width: 110px;">Status</th>
-                  <th>Caption / Message</th>
-                  <th style="width: 200px;">Post ID</th>
-                </tr>
-              </thead>
-              <tbody id="logsTableBody">
-                <tr>
-                  <td colspan="4" class="text-center py-4">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Loading logs from backend...
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+      <!-- App Content Grid -->
+      <main class="dashboard-grid" id="controls-section">
+
+        <!-- Left Column: Settings & Controls -->
+        <section class="card control-card">
+          <div class="card-header">
+            <h2><i class="fa-solid fa-link"></i> Web App Endpoint</h2>
           </div>
-        </div>
-      </section>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="webAppUrl"><i class="fa-solid fa-server"></i> Apps Script Web App URL</label>
+              <input type="url" id="webAppUrl" value="https://script.google.com/macros/s/AKfycbxQ-vbzy60GwVdAzpiF_Hq4-AOsrpEnQdWdFKJdaEXcrcOadGM9O47CPYxl0ENnaygF/exec" placeholder="https://script.google.com/macros/s/.../exec" required>
+              <small class="help-text">Google Apps Script se deploy hua Web App URL yahan auto-filled hai.</small>
+            </div>
 
-    </main>
+            <div class="divider"></div>
 
-    <!-- Footer -->
-    <footer class="main-footer">
-      <p>Facebook Automation Dashboard &bull; Powered by Google Gemini AI & Apps Script</p>
-    </footer>
+            <div class="card-header p-0">
+              <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Create New Facebook Post</h2>
+            </div>
+            
+            <div class="form-group mt-3">
+              <label for="topicInput"><i class="fa-solid fa-lightbulb"></i> Post Topic (Optional)</label>
+              <input type="text" id="topicInput" placeholder="e.g. Funny / Relatable Animal Images, Tech Tips...">
+              <small class="help-text">Agar aap topic blank chhodenge toh AI automatic trending topic choose karega.</small>
+            </div>
+
+            <button id="generateBtn" class="btn btn-primary btn-block btn-lg">
+              <i class="fa-solid fa-paper-plane"></i> Generate & Post Now
+            </button>
+          </div>
+        </section>
+
+        <!-- Right Column: Live Status & Output -->
+        <section class="card status-card">
+          <div class="card-header">
+            <h2><i class="fa-solid fa-chart-line"></i> Execution Status</h2>
+          </div>
+          <div class="card-body">
+            <div id="statusBox" class="status-box idle">
+              <div class="status-icon">
+                <i class="fa-solid fa-circle-info"></i>
+              </div>
+              <div class="status-details">
+                <h3 id="statusTitle">Ready for Automation</h3>
+                <p id="statusMessage">Topic enter karein aur "Generate & Post Now" par click karein.</p>
+              </div>
+            </div>
+
+            <!-- Generated Content Preview Box (Hidden initially) -->
+            <div id="resultPreview" class="result-preview hidden">
+              <div class="preview-header">
+                <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Published</span>
+                <span class="post-id-badge" id="previewPostId">Post ID: -</span>
+              </div>
+              <div class="preview-body">
+                <label><i class="fa-solid fa-align-left"></i> Generated Caption:</label>
+                <pre id="previewCaption" class="caption-text"></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Full Width Row: Automation Logs -->
+        <section class="card logs-card" id="logs-section">
+          <div class="card-header flex-between">
+            <h2><i class="fa-solid fa-clock-rotate-left"></i> Execution Logs (Google Sheets)</h2>
+            <button id="refreshLogsBtn" class="btn btn-secondary">
+              <i class="fa-solid fa-rotate-right"></i> Refresh Logs
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="logs-table">
+                <thead>
+                  <tr>
+                    <th style="width: 180px;">Time</th>
+                    <th style="width: 110px;">Status</th>
+                    <th>Caption / Message</th>
+                    <th style="width: 200px;">Post ID</th>
+                  </tr>
+                </thead>
+                <tbody id="logsTableBody">
+                  <tr>
+                    <td colspan="4" class="text-center py-4">
+                      <i class="fa-solid fa-spinner fa-spin"></i> Loading logs from backend...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Footer -->
+      <footer class="main-footer">
+        <p>Facebook Automation Dashboard Pro &bull; Powered by Google Gemini AI & Apps Script</p>
+      </footer>
+    </div>
+
   </div>
 
   <!-- Interactive Node Customization Modal -->
@@ -324,6 +395,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Premium Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
 
   <!-- Facebook SDK for JS -->
   <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>

@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
- * FACEBOOK AUTOMATION DASHBOARD - JAVASCRIPT LOGIC (script.js)
- * Plain Vanilla JS with Pabbly / n8n Style Direct Facebook OAuth Integration
+ * FACEBOOK AUTOMATION DASHBOARD PRO - JAVASCRIPT LOGIC (script.js)
+ * Collapsible Sidebar, Toast Notifications, Direct OAuth Connect & Interactive Workflow Canvas
  * ==============================================================================
  */
 
@@ -16,7 +16,15 @@ if (window.location.hash && window.location.hash.includes('access_token=')) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // DOM Elements
+  // DOM Elements - Sidebar & Nav
+  const sidebar = document.getElementById('sidebar');
+  const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+  const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+  const fbAuthLabel = document.getElementById('fbAuthLabel');
+  const fbAuthActionBtn = document.getElementById('fbAuthActionBtn');
+  const toastContainer = document.getElementById('toastContainer');
+
+  // Dashboard Controls
   const webAppUrlInput = document.getElementById('webAppUrl');
   const topicInput = document.getElementById('topicInput');
   const generateBtn = document.getElementById('generateBtn');
@@ -52,17 +60,90 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultPreview = document.getElementById('resultPreview');
   const previewPostId = document.getElementById('previewPostId');
   const previewCaption = document.getElementById('previewCaption');
-  
   const logsTableBody = document.getElementById('logsTableBody');
 
   // LocalStorage Keys
   const STORAGE_KEY_WEBAPP = 'fb_automation_webapp_url';
   const STORAGE_KEY_CREDS = 'fb_automation_credentials';
+  const STORAGE_KEY_SIDEBAR = 'fb_sidebar_collapsed';
   const DEFAULT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxQ-vbzy60GwVdAzpiF_Hq4-AOsrpEnQdWdFKJdaEXcrcOadGM9O47CPYxl0ENnaygF/exec';
 
   let currentActiveNode = null;
 
-  // 1. Initialize Saved Web App URL & Custom Credentials
+  // 1. SIDEBAR TOGGLE & NAV HANDLERS
+  const isSidebarCollapsed = localStorage.getItem(STORAGE_KEY_SIDEBAR) === 'true';
+  if (isSidebarCollapsed) {
+    document.body.classList.add('sidebar-collapsed');
+  }
+
+  sidebarToggleBtn.addEventListener('click', () => {
+    document.body.classList.toggle('sidebar-collapsed');
+    const collapsed = document.body.classList.contains('sidebar-collapsed');
+    localStorage.setItem(STORAGE_KEY_SIDEBAR, collapsed);
+  });
+
+  mobileSidebarToggle.addEventListener('click', () => {
+    document.body.classList.toggle('mobile-sidebar-open');
+  });
+
+  // Smooth Scroll & Active Link highlighting
+  document.querySelectorAll('.sidebar-nav .nav-item[href^="#"]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = link.getAttribute('href');
+      const targetSection = document.querySelector(targetId);
+
+      document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => item.classList.remove('active'));
+      link.classList.add('active');
+
+      if (targetId === '#configPanel') {
+        configPanel.classList.remove('hidden');
+      }
+
+      if (targetSection) {
+        targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (window.innerWidth <= 992) {
+          document.body.classList.remove('mobile-sidebar-open');
+        }
+      }
+    });
+  });
+
+  // 2. TOAST NOTIFICATION ENGINE
+  function showToast(title, message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    let iconHtml = '<i class="fa-solid fa-circle-info toast-icon"></i>';
+    if (type === 'success') iconHtml = '<i class="fa-solid fa-circle-check toast-icon"></i>';
+    if (type === 'error') iconHtml = '<i class="fa-solid fa-circle-xmark toast-icon"></i>';
+    if (type === 'warning') iconHtml = '<i class="fa-solid fa-triangle-exclamation toast-icon"></i>';
+
+    toast.innerHTML = `
+      ${iconHtml}
+      <div class="toast-content">
+        <div class="toast-title">${escapeHtml(title)}</div>
+        <div class="toast-message">${escapeHtml(message)}</div>
+      </div>
+      <button class="toast-close">&times;</button>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    toast.querySelector('.toast-close').addEventListener('click', () => {
+      toast.style.animation = 'toastIn 0.3s ease reverse';
+      setTimeout(() => toast.remove(), 300);
+    });
+
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.style.animation = 'toastIn 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+      }
+    }, 4500);
+  }
+
+  // 3. INITIALIZE SAVED DATA
   const savedUrl = localStorage.getItem(STORAGE_KEY_WEBAPP);
   if (savedUrl) {
     webAppUrlInput.value = savedUrl;
@@ -85,8 +166,40 @@ document.addEventListener('DOMContentLoaded', () => {
       if (savedCreds.fbPageId) cfgFbPageId.value = savedCreds.fbPageId;
       if (savedCreds.fbAccessToken) cfgFbToken.value = savedCreds.fbAccessToken;
       if (savedCreds.logSheetId) cfgSheetId.value = savedCreds.logSheetId;
+      
+      updateFbAuthStatus(Boolean(savedCreds.fbAccessToken));
     } catch(e) {}
   }
+
+  function updateFbAuthStatus(isConnected) {
+    if (isConnected) {
+      fbAuthLabel.textContent = 'FB Connected';
+      fbAuthActionBtn.textContent = 'Logout';
+      fbAuthActionBtn.className = 'auth-btn btn-logout';
+    } else {
+      fbAuthLabel.textContent = 'FB Disconnected';
+      fbAuthActionBtn.textContent = 'Login';
+      fbAuthActionBtn.className = 'auth-btn btn-login';
+    }
+  }
+
+  fbAuthActionBtn.addEventListener('click', () => {
+    const isConnected = fbAuthLabel.textContent.includes('Connected');
+    if (isConnected) {
+      cfgFbToken.value = '';
+      cfgFbPageId.value = '';
+      const creds = JSON.parse(localStorage.getItem(STORAGE_KEY_CREDS) || '{}');
+      delete creds.fbAccessToken;
+      delete creds.fbPageId;
+      localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(creds));
+      updateFbAuthStatus(false);
+      showToast('Facebook Logged Out', 'Page Access Token remove kar diya gaya.', 'info');
+    } else {
+      configPanel.classList.remove('hidden');
+      configPanel.scrollIntoView({ behavior: 'smooth' });
+      handlePabblyFbConnect();
+    }
+  });
 
   // Toggle Password Input Visibility
   document.querySelectorAll('.toggle-pwd-btn').forEach(btn => {
@@ -108,19 +221,19 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleConfigBtn.classList.toggle('active');
   });
 
-  // 2. PABBLY / N8N STYLE DIRECT OAUTH FACEBOOK CONNECT
+  // 4. FACEBOOK DIRECT CONNECT HANDLER
   fbLoginBtn.addEventListener('click', handlePabblyFbConnect);
 
   function handlePabblyFbConnect() {
     let appId = cfgFbAppId.value.trim();
 
     if (!appId) {
-      const userPromptAppId = prompt("Pabbly/n8n Direct OAuth login ke liye kripya apna Meta App ID enter karein:\n\n(Agar App ID nahi hai, toh developers.facebook.com par 1-minute me App banayein)");
+      const userPromptAppId = prompt("Direct OAuth login ke liye kripya apna Meta App ID enter karein:\n\n(Agar App ID nahi hai, toh developers.facebook.com par App banayein)");
       if (userPromptAppId && userPromptAppId.trim()) {
         appId = userPromptAppId.trim();
         cfgFbAppId.value = appId;
       } else {
-        alert("Pabbly Style Connect ke liye Facebook App ID zaroori hai. Ya aap Graph API Explorer Token paste kar sakte hain.");
+        showToast('App ID Required', 'Facebook Direct Login ke liye Meta App ID enter karein.', 'warning');
         return;
       }
     }
@@ -132,13 +245,11 @@ document.addEventListener('DOMContentLoaded', () => {
     fbLoginBtn.disabled = true;
     fbLoginBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Opening Facebook Popup...`;
 
-    // Open OAuth Popup window
     const width = 600, height = 700;
     const left = (window.innerWidth - width) / 2;
     const top = (window.innerHeight - height) / 2;
     const popup = window.open(oauthUrl, 'FB_OAuth_Popup', `width=${width},height=${height},top=${top},left=${left}`);
 
-    // Listen for OAuth token message from popup window
     const messageListener = (event) => {
       if (event.data && event.data.type === 'FB_OAUTH_TOKEN') {
         window.removeEventListener('message', messageListener);
@@ -148,7 +259,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     window.addEventListener('message', messageListener);
 
-    // Fallback Popup check interval
     const checkPopupInt = setInterval(() => {
       if (popup && popup.closed) {
         clearInterval(checkPopupInt);
@@ -158,7 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
   }
 
-  // Fetch Managed Facebook Pages using User Token
   async function fetchFbPages(userToken) {
     try {
       const response = await fetch(`https://graph.facebook.com/v20.0/me/accounts?access_token=${userToken}`);
@@ -170,11 +279,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (json.data && json.data.length > 0) {
         populateFbPagesDropdown(json.data);
       } else {
-        alert('Aapke Facebook Account me koi managed Facebook Page nahi mila ya permission reject ho gayi.');
+        showToast('No Managed Pages', 'Aapke Facebook Account me koi Page nahi mila.', 'warning');
       }
     } catch(err) {
       console.error(err);
-      alert('Facebook Pages fetch karne me error: ' + err.message);
+      showToast('Fetch Failed', 'Pages fetch error: ' + err.message, 'error');
       fbLoginBtn.disabled = false;
       fbLoginBtn.innerHTML = `<i class="fa-brands fa-facebook-f"></i> Connect Facebook Account`;
     }
@@ -217,11 +326,12 @@ document.addEventListener('DOMContentLoaded', () => {
       logSheetId: cfgSheetId.value.trim()
     };
     localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(creds));
+    updateFbAuthStatus(true);
     
-    alert(`🎉 Facebook Page Successfully Connected!\nPage ID: ${pageId}\nPage Access Token automatic fill & backend save ho gaya!`);
+    showToast('Facebook Page Connected', `Page ID ${pageId} successfully saved!`, 'success');
   }
 
-  // 3. CLICKABLE WORKFLOW NODES & CONFIGURATION MODAL
+  // 5. CLICKABLE WORKFLOW NODES & CONFIGURATION MODAL
   document.querySelectorAll('.wf-node.clickable').forEach(node => {
     node.addEventListener('click', () => {
       const nodeType = node.getAttribute('data-node');
@@ -303,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
       modalBody.innerHTML = `
         <div class="mb-3">
           <button id="mFbLoginBtn" class="btn btn-facebook btn-block">
-            <i class="fa-brands fa-facebook-f"></i> Direct Facebook Connect (Pabbly/n8n Style)
+            <i class="fa-brands fa-facebook-f"></i> Direct Facebook Connect
           </button>
         </div>
         <div class="form-group">
@@ -337,7 +447,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Save Modal Settings Handler
   saveModalBtn.addEventListener('click', () => {
     if (!currentActiveNode) return;
 
@@ -366,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(creds));
 
-    alert(`✅ Step Settings Successfully Saved!`);
+    showToast('Step Saved', 'Step Settings successfully save ho gaye!', 'success');
     closeNodeModal();
   });
 
@@ -384,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const webAppUrl = webAppUrlInput.value.trim();
     if (!webAppUrl) {
-      alert('Credentials browser me save ho gaye!');
+      showToast('Saved Locally', 'Credentials browser me save ho gaye!', 'info');
       return;
     }
 
@@ -402,31 +511,31 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const result = await response.json();
       if (result.status === 'success') {
-        alert('✅ API Credentials Apps Script Properties & Browser me successfully save ho gaye!');
+        showToast('Backend Synced', 'API Credentials Apps Script Properties me save ho gaye!', 'success');
       } else {
-        alert('⚠️ Warning: ' + result.message);
+        showToast('Warning', result.message, 'warning');
       }
     } catch(err) {
       console.error(err);
-      alert('Credentials browser me save ho gaye! (Backend sync failed: ' + err.message + ')');
+      showToast('Saved Locally', 'Credentials browser me save ho gaye (Sync fail).', 'info');
     } finally {
       saveCredentialsBtn.disabled = false;
       saveCredentialsBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Credentials to Backend`;
     }
   });
 
-  // 4. Fetch Logs automatically on page load
+  // 6. Fetch Logs automatically on page load
   if (webAppUrlInput.value.trim()) {
     fetchLogs();
   }
 
-  // 5. Automation Execution & Workflow Node Animation
+  // 7. Automation Execution & Workflow Node Animation
   generateBtn.addEventListener('click', async () => {
     const webAppUrl = webAppUrlInput.value.trim();
     const topic = topicInput.value.trim();
 
     if (!webAppUrl) {
-      alert('Kripya pehle Google Apps Script Web App URL fill karein!');
+      showToast('URL Missing', 'Kripya Google Apps Script Web App URL fill karein!', 'warning');
       webAppUrlInput.focus();
       return;
     }
@@ -493,6 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateWorkflowLine(4);
 
         setSuccessState('Published Successfully!', result.message || 'Facebook Page par photo post published!');
+        showToast('Automation Complete', 'Facebook Page par post publish ho gaya!', 'success');
         
         resultPreview.classList.remove('hidden');
         previewPostId.textContent = `Post ID: ${result.postId || 'N/A'}`;
@@ -502,6 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         setWorkflowNode('node-gemini', 'failed', 'Error');
         setErrorState('Automation Failed', result.message || 'Ek error aaya.');
+        showToast('Automation Failed', result.message || 'Error occurred.', 'error');
       }
     } catch (err) {
       console.error('Fetch Error:', err);
@@ -510,6 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
       clearTimeout(stepTimer3);
       setWorkflowNode('node-trigger', 'failed', 'Error');
       setErrorState('Network / Server Error', err.message || 'Apps Script Web App se connection fail.');
+      showToast('Network Error', err.message || 'Web App connect nahi hua.', 'error');
     } finally {
       setLoadingState(false);
     }
@@ -622,7 +734,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateWorkflowLine(stepIndex) {
-    const lines = document.getElementById('.wf-line');
     document.querySelectorAll('.wf-line').forEach((line, idx) => {
       if (idx < stepIndex) line.classList.add('active');
     });
