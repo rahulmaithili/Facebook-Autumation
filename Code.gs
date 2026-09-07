@@ -18,7 +18,7 @@ function setupScriptProperties() {
     'GEMINI_API_KEY': 'YOUR_GEMINI_API_KEY_HERE',
     'FB_PAGE_ID': 'YOUR_FACEBOOK_PAGE_ID_HERE',
     'FB_PAGE_ACCESS_TOKEN': 'YOUR_FACEBOOK_PAGE_ACCESS_TOKEN_HERE',
-    'LOG_SHEET_ID': '' // (Optional) Spreadsheet ID - Agar blank chhodenge toh script auto naya Sheet use karegi
+    'LOG_SHEET_ID': '1DfQmhNSSGV5dZnlI2-eD-V8-E0h5FJM7o1EoleNiA5OwMcNZY9UkG_sI' // User's Google Sheet ID
   });
   Logger.log('✅ Configuration Properties successfully saved!');
 }
