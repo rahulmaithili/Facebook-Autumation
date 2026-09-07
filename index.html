@@ -36,7 +36,7 @@
       </div>
     </header>
 
-    <!-- Visual Automation Workflow Diagram (Pabbly Connect Style - CLICKABLE NODES) -->
+    <!-- Visual Automation Workflow Diagram (Pabbly / n8n Style - CLICKABLE NODES) -->
     <section class="card workflow-card mb-4">
       <div class="card-header flex-between">
         <div>
@@ -137,19 +137,19 @@
     <section class="card config-panel-card hidden" id="configPanel">
       <div class="card-header flex-between">
         <h2><i class="fa-solid fa-sliders"></i> Custom API Credentials Setup</h2>
-        <span class="help-text">1-Click Facebook Login ya manual keys fill karein!</span>
+        <span class="help-text">Pabbly / n8n Style Direct Facebook Connect!</span>
       </div>
       <div class="card-body">
 
-        <!-- 1-Click Facebook Direct Login Card -->
+        <!-- Pabbly / n8n Style Direct OAuth Login Banner -->
         <div class="fb-login-banner mb-4">
           <div class="fb-login-info">
-            <h3><i class="fa-brands fa-facebook"></i> Direct 1-Click Facebook Connect</h3>
-            <p>Apne Facebook Account se login karke Page Access Token aur Page ID automatic fetch karein.</p>
+            <h3><i class="fa-brands fa-facebook"></i> Direct Facebook Connect (Pabbly / n8n Style)</h3>
+            <p>Facebook account connect karke 1-click me Page ID aur Page Access Token automatic fetch karein.</p>
           </div>
           <div class="fb-login-action">
             <button id="fbLoginBtn" class="btn btn-facebook">
-              <i class="fa-brands fa-facebook-f"></i> Connect Facebook Page
+              <i class="fa-brands fa-facebook-f"></i> Connect Facebook Account
             </button>
           </div>
         </div>
@@ -166,8 +166,9 @@
 
         <div class="credentials-grid">
           <div class="form-group">
-            <label for="cfgFbAppId"><i class="fa-solid fa-cubes"></i> Facebook App ID (Optional for SDK)</label>
-            <input type="text" id="cfgFbAppId" placeholder="e.g. 123456789012345">
+            <label for="cfgFbAppId"><i class="fa-solid fa-cubes"></i> Facebook App ID</label>
+            <input type="text" id="cfgFbAppId" placeholder="Enter Meta App ID (e.g. 1234567890...)">
+            <small class="help-text">OAuth Popup Direct Login ke liye Meta App ID enter karein.</small>
           </div>
 
           <div class="form-group">

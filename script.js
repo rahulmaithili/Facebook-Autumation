@@ -1,9 +1,19 @@
 /**
  * ==============================================================================
  * FACEBOOK AUTOMATION DASHBOARD - JAVASCRIPT LOGIC (script.js)
- * Plain Vanilla JS with Clickable Workflow Nodes, Node Settings Modal & FB SDK Direct Login
+ * Plain Vanilla JS with Pabbly / n8n Style Direct Facebook OAuth Integration
  * ==============================================================================
  */
+
+// Detect OAuth Redirect Callback (if running inside popup)
+if (window.location.hash && window.location.hash.includes('access_token=')) {
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const accessToken = hashParams.get('access_token');
+  if (accessToken && window.opener) {
+    window.opener.postMessage({ type: 'FB_OAUTH_TOKEN', token: accessToken }, '*');
+    window.close();
+  }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
@@ -98,51 +108,76 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleConfigBtn.classList.toggle('active');
   });
 
-  // 2. FACEBOOK SDK DIRECT LOGIN
-  window.fbAsyncInit = function() {
-    const appId = cfgFbAppId.value.trim() || '966242223397117';
-    if (window.FB) {
-      window.FB.init({
-        appId      : appId,
-        cookie     : true,
-        xfbml      : true,
-        version    : 'v20.0'
-      });
-    }
-  };
+  // 2. PABBLY / N8N STYLE DIRECT OAUTH FACEBOOK CONNECT
+  fbLoginBtn.addEventListener('click', handlePabblyFbConnect);
 
-  fbLoginBtn.addEventListener('click', handleFbLogin);
+  function handlePabblyFbConnect() {
+    let appId = cfgFbAppId.value.trim();
 
-  function handleFbLogin() {
-    const appId = cfgFbAppId.value.trim() || '966242223397117';
-
-    if (!window.FB) {
-      alert('Facebook SDK load ho raha hai... Kripya 2 seconds baad try karein.');
-      return;
-    }
-
-    window.FB.init({
-      appId      : appId,
-      cookie     : true,
-      xfbml      : true,
-      version    : 'v20.0'
-    });
-
-    window.FB.login(function(response) {
-      if (response.authResponse) {
-        window.FB.api('/me/accounts', function(pagesResponse) {
-          if (pagesResponse && pagesResponse.data && pagesResponse.data.length > 0) {
-            populateFbPagesDropdown(pagesResponse.data);
-          } else {
-            alert('Aapke Facebook Account me koi managed Page nahi mila ya permission reject ho gayi.');
-          }
-        });
+    if (!appId) {
+      const userPromptAppId = prompt("Pabbly/n8n Direct OAuth login ke liye kripya apna Meta App ID enter karein:\n\n(Agar App ID nahi hai, toh developers.facebook.com par 1-minute me App banayein)");
+      if (userPromptAppId && userPromptAppId.trim()) {
+        appId = userPromptAppId.trim();
+        cfgFbAppId.value = appId;
       } else {
-        alert('Facebook Login cancel kar diya gaya.');
+        alert("Pabbly Style Connect ke liye Facebook App ID zaroori hai. Ya aap Graph API Explorer Token paste kar sakte hain.");
+        return;
       }
-    }, {
-      scope: 'pages_manage_posts,pages_read_engagement,pages_show_list'
-    });
+    }
+
+    const redirectUri = window.location.origin + window.location.pathname;
+    const scope = 'pages_manage_posts,pages_read_engagement,pages_show_list';
+    const oauthUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
+
+    fbLoginBtn.disabled = true;
+    fbLoginBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Opening Facebook Popup...`;
+
+    // Open OAuth Popup window
+    const width = 600, height = 700;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+    const popup = window.open(oauthUrl, 'FB_OAuth_Popup', `width=${width},height=${height},top=${top},left=${left}`);
+
+    // Listen for OAuth token message from popup window
+    const messageListener = (event) => {
+      if (event.data && event.data.type === 'FB_OAUTH_TOKEN') {
+        window.removeEventListener('message', messageListener);
+        const userAccessToken = event.data.token;
+        fetchFbPages(userAccessToken);
+      }
+    };
+    window.addEventListener('message', messageListener);
+
+    // Fallback Popup check interval
+    const checkPopupInt = setInterval(() => {
+      if (popup && popup.closed) {
+        clearInterval(checkPopupInt);
+        fbLoginBtn.disabled = false;
+        fbLoginBtn.innerHTML = `<i class="fa-brands fa-facebook-f"></i> Connect Facebook Account`;
+      }
+    }, 1000);
+  }
+
+  // Fetch Managed Facebook Pages using User Token
+  async function fetchFbPages(userToken) {
+    try {
+      const response = await fetch(`https://graph.facebook.com/v20.0/me/accounts?access_token=${userToken}`);
+      const json = await response.json();
+
+      fbLoginBtn.disabled = false;
+      fbLoginBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Connected!`;
+
+      if (json.data && json.data.length > 0) {
+        populateFbPagesDropdown(json.data);
+      } else {
+        alert('Aapke Facebook Account me koi managed Facebook Page nahi mila ya permission reject ho gayi.');
+      }
+    } catch(err) {
+      console.error(err);
+      alert('Facebook Pages fetch karne me error: ' + err.message);
+      fbLoginBtn.disabled = false;
+      fbLoginBtn.innerHTML = `<i class="fa-brands fa-facebook-f"></i> Connect Facebook Account`;
+    }
   }
 
   function populateFbPagesDropdown(pages) {
@@ -183,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(creds));
     
-    alert(`✅ Facebook Page Connected: ${pageId}\nPage Access Token aur Page ID automatic fill & save ho gaye!`);
+    alert(`🎉 Facebook Page Successfully Connected!\nPage ID: ${pageId}\nPage Access Token automatic fill & backend save ho gaya!`);
   }
 
   // 3. CLICKABLE WORKFLOW NODES & CONFIGURATION MODAL
@@ -268,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
       modalBody.innerHTML = `
         <div class="mb-3">
           <button id="mFbLoginBtn" class="btn btn-facebook btn-block">
-            <i class="fa-brands fa-facebook-f"></i> 1-Click Direct Facebook Connect
+            <i class="fa-brands fa-facebook-f"></i> Direct Facebook Connect (Pabbly/n8n Style)
           </button>
         </div>
         <div class="form-group">
@@ -283,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       setTimeout(() => {
         const mBtn = document.getElementById('mFbLoginBtn');
-        if (mBtn) mBtn.addEventListener('click', handleFbLogin);
+        if (mBtn) mBtn.addEventListener('click', handlePabblyFbConnect);
       }, 100);
     } else if (nodeType === 'sheets') {
       modalTitle.innerHTML = `<i class="fa-solid fa-table" style="color: #0f9d58;"></i> Configure Step 5: Google Sheets Logger`;
@@ -322,7 +357,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (sId && sId.value) cfgSheetId.value = sId.value;
     }
 
-    // Save Credentials to LocalStorage
     const creds = {
       fbAppId: cfgFbAppId.value.trim(),
       geminiApiKey: cfgGeminiKey.value.trim(),
@@ -588,8 +622,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateWorkflowLine(stepIndex) {
-    const lines = document.querySelectorAll('.wf-line');
-    lines.forEach((line, idx) => {
+    const lines = document.getElementById('.wf-line');
+    document.querySelectorAll('.wf-line').forEach((line, idx) => {
       if (idx < stepIndex) line.classList.add('active');
     });
   }
