@@ -1,7 +1,8 @@
 /**
  * ==============================================================================
  * FACEBOOK AUTOMATION DASHBOARD PRO - JAVASCRIPT LOGIC (script.js)
- * Collapsible Sidebar, Toast Engine, Ultra-Premium Custom Modals, Direct OAuth Connect
+ * Multi-Model Support (Gemini 2.0/2.5/1.5 & Nano Banana gemini-2.5-flash-image),
+ * Full Step Configuration Modals, Collapsible Sidebar & Direct OAuth Connect
  * ==============================================================================
  */
 
@@ -70,6 +71,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const previewPostId = document.getElementById('previewPostId');
   const previewCaption = document.getElementById('previewCaption');
   const logsTableBody = document.getElementById('logsTableBody');
+
+  // Selected AI Models State
+  let selectedGeminiModel = 'gemini-2.0-flash';
+  let selectedImageModel = 'gemini-2.5-flash-image'; // Nano Banana Default!
+  let selectedPromptTone = 'Enthusiastic & Engaging';
+  let selectedHashtagCount = '3 to 5';
+  let selectedAspectRatio = '1:1';
+  let selectedArtStyle = 'Vibrant Graphic Illustration';
 
   // LocalStorage Keys
   const STORAGE_KEY_WEBAPP = 'fb_automation_webapp_url';
@@ -199,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (url) localStorage.setItem(STORAGE_KEY_WEBAPP, url);
   });
 
-  // Load Saved Credentials from LocalStorage
+  // Load Saved Credentials & Model Selections
   const savedCredsRaw = localStorage.getItem(STORAGE_KEY_CREDS);
   if (savedCredsRaw) {
     try {
@@ -209,6 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (savedCreds.fbPageId) cfgFbPageId.value = savedCreds.fbPageId;
       if (savedCreds.fbAccessToken) cfgFbToken.value = savedCreds.fbAccessToken;
       if (savedCreds.logSheetId) cfgSheetId.value = savedCreds.logSheetId;
+      if (savedCreds.geminiModel) selectedGeminiModel = savedCreds.geminiModel;
+      if (savedCreds.imageModel) selectedImageModel = savedCreds.imageModel;
       
       updateFbAuthStatus(Boolean(savedCreds.fbAccessToken));
     } catch(e) {}
@@ -264,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleConfigBtn.classList.toggle('active');
   });
 
-  // 5. FACEBOOK DIRECT CONNECT (Instant Login Popup without prompt modal)
+  // 5. FACEBOOK DIRECT CONNECT
   fbLoginBtn.addEventListener('click', handlePabblyFbConnect);
 
   function handlePabblyFbConnect() {
@@ -358,7 +369,9 @@ document.addEventListener('DOMContentLoaded', () => {
       geminiApiKey: cfgGeminiKey.value.trim(),
       fbPageId: pageId,
       fbAccessToken: pageAccessToken,
-      logSheetId: cfgSheetId.value.trim()
+      logSheetId: cfgSheetId.value.trim(),
+      geminiModel: selectedGeminiModel,
+      imageModel: selectedImageModel
     };
     localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(creds));
     updateFbAuthStatus(true);
@@ -366,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Facebook Page Connected', `Page ID ${pageId} successfully saved!`, 'success');
   }
 
-  // 6. CLICKABLE WORKFLOW NODES & CONFIGURATION MODAL
+  // 6. CLICKABLE WORKFLOW NODES & RICH MULTI-MODEL CONFIGURATION MODAL
   document.querySelectorAll('.wf-node.clickable').forEach(node => {
     node.addEventListener('click', () => {
       const nodeType = node.getAttribute('data-node');
@@ -397,49 +410,84 @@ document.addEventListener('DOMContentLoaded', () => {
           </select>
         </div>
         <div class="form-group">
+          <label><i class="fa-solid fa-hourglass-half"></i> Cron Time Interval</label>
+          <select id="mCronInterval" class="form-select">
+            <option value="daily">Daily once at 9:00 AM</option>
+            <option value="12hours">Every 12 Hours</option>
+            <option value="6hours">Every 6 Hours</option>
+            <option value="1hour">Every 1 Hour</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label><i class="fa-solid fa-lightbulb"></i> Default Post Topic Preset</label>
           <input type="text" id="mTopicPreset" value="${topicInput.value || ''}" placeholder="e.g. Funny Relatable Memes, Tech Growth...">
           <small class="help-text">Agar blank chhodenge toh AI auto-select karega.</small>
         </div>
       `;
     } else if (nodeType === 'gemini') {
-      modalTitle.innerHTML = `<i class="fa-solid fa-brain" style="color: #3498db;"></i> Configure Step 2: Gemini AI Caption`;
+      modalTitle.innerHTML = `<i class="fa-solid fa-brain" style="color: #3498db;"></i> Configure Step 2: Gemini Text AI`;
       modalBody.innerHTML = `
         <div class="form-group">
-          <label><i class="fa-solid fa-microchip"></i> Model Selected</label>
-          <input type="text" value="gemini-2.0-flash (Recommended)" disabled readonly>
+          <label><i class="fa-solid fa-microchip"></i> Select Gemini AI Text Model</label>
+          <select id="mGeminiModel" class="form-select">
+            <option value="gemini-2.0-flash" ${selectedGeminiModel === 'gemini-2.0-flash' ? 'selected' : ''}>gemini-2.0-flash (Recommended - Ultra Fast)</option>
+            <option value="gemini-2.5-flash" ${selectedGeminiModel === 'gemini-2.5-flash' ? 'selected' : ''}>gemini-2.5-flash (Multimodal Pro)</option>
+            <option value="gemini-1.5-flash" ${selectedGeminiModel === 'gemini-1.5-flash' ? 'selected' : ''}>gemini-1.5-flash (High Speed)</option>
+            <option value="gemini-1.5-pro" ${selectedGeminiModel === 'gemini-1.5-pro' ? 'selected' : ''}>gemini-1.5-pro (Deep Reasoning)</option>
+          </select>
         </div>
         <div class="form-group">
           <label><i class="fa-solid fa-key"></i> Gemini API Key</label>
           <input type="password" id="mGeminiKey" value="${cfgGeminiKey.value || ''}" placeholder="AIzaSy...">
         </div>
         <div class="form-group">
+          <label><i class="fa-solid fa-wand-magic-sparkles"></i> Prompt Tone & Style</label>
+          <select id="mPromptTone" class="form-select">
+            <option value="Enthusiastic & Engaging" ${selectedPromptTone === 'Enthusiastic & Engaging' ? 'selected' : ''}>Enthusiastic & Engaging</option>
+            <option value="Educational & Informative">Educational & Informative</option>
+            <option value="Professional Business">Professional Business</option>
+            <option value="Humorous & Relatable Memes">Humorous & Relatable Memes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-hashtag"></i> Hashtags Count</label>
+          <select id="mHashtagCount" class="form-select">
+            <option value="3 to 5" selected>3 to 5 Hashtags</option>
+            <option value="5 to 8">5 to 8 Hashtags</option>
+            <option value="None">No Hashtags</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label><i class="fa-solid fa-pen-nib"></i> Custom System Prompt Style</label>
-          <textarea id="mPromptStyle" placeholder="Write friendly engaging caption with emojis & 4 hashtags...">Write an engaging, high-performing Facebook post caption with emojis and relevant hashtags.</textarea>
+          <textarea id="mPromptStyle" placeholder="Write friendly engaging caption with emojis & hashtags...">Write an engaging, high-performing Facebook post caption with emojis and relevant hashtags.</textarea>
         </div>
       `;
     } else if (nodeType === 'imagen') {
-      modalTitle.innerHTML = `<i class="fa-solid fa-image" style="color: #9b59b6;"></i> Configure Step 3: Imagen Image AI`;
+      modalTitle.innerHTML = `<i class="fa-solid fa-image" style="color: #9b59b6;"></i> Configure Step 3: Nano Banana / Imagen Image AI`;
       modalBody.innerHTML = `
         <div class="form-group">
-          <label><i class="fa-solid fa-palette"></i> Image Generator Model</label>
-          <input type="text" value="imagen-3.0-generate-002" disabled readonly>
+          <label><i class="fa-solid fa-microchip"></i> Select Image AI Generator Model</label>
+          <select id="mImageModel" class="form-select">
+            <option value="gemini-2.5-flash-image" ${selectedImageModel === 'gemini-2.5-flash-image' ? 'selected' : ''}>gemini-2.5-flash-image (Nano Banana - Ultra Fast)</option>
+            <option value="imagen-3.0-generate-002" ${selectedImageModel === 'imagen-3.0-generate-002' ? 'selected' : ''}>imagen-3.0-generate-002 (Google Imagen 3 High Res)</option>
+            <option value="imagen-3.0-fast-generate-001" ${selectedImageModel === 'imagen-3.0-fast-generate-001' ? 'selected' : ''}>imagen-3.0-fast-generate-001 (Imagen Fast)</option>
+          </select>
         </div>
         <div class="form-group">
           <label><i class="fa-solid fa-crop"></i> Aspect Ratio</label>
           <select id="mAspectRatio" class="form-select">
-            <option value="1:1" selected>1:1 Square (Social Media Standard)</option>
-            <option value="16:9">16:9 Landscape</option>
-            <option value="4:5">4:5 Vertical Portrait</option>
+            <option value="1:1" ${selectedAspectRatio === '1:1' ? 'selected' : ''}>1:1 Square (Social Media Standard)</option>
+            <option value="16:9" ${selectedAspectRatio === '16:9' ? 'selected' : ''}>16:9 Landscape</option>
+            <option value="4:5" ${selectedAspectRatio === '4:5' ? 'selected' : ''}>4:5 Vertical Portrait</option>
           </select>
         </div>
         <div class="form-group">
           <label><i class="fa-solid fa-paintbrush"></i> Artwork Style Preset</label>
           <select id="mArtStyle" class="form-select">
-            <option value="graphic" selected>Vibrant Graphic Illustration</option>
-            <option value="photo">Realistic High-Res Photography</option>
-            <option value="3d">Modern 3D Render Art</option>
-            <option value="minimalist">Clean Minimalist Vector Art</option>
+            <option value="Vibrant Graphic Illustration" ${selectedArtStyle === 'Vibrant Graphic Illustration' ? 'selected' : ''}>Vibrant Graphic Illustration</option>
+            <option value="Realistic High-Res Photography">Realistic High-Res Photography</option>
+            <option value="Modern 3D Render Art">Modern 3D Render Art</option>
+            <option value="Clean Minimalist Vector Art">Clean Minimalist Vector Art</option>
           </select>
         </div>
       `;
@@ -448,7 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
       modalBody.innerHTML = `
         <div class="mb-3">
           <button id="mFbLoginBtn" class="btn btn-facebook btn-block">
-            <i class="fa-brands fa-facebook-f"></i> Direct Facebook Connect
+            <i class="fa-brands fa-facebook-f"></i> Direct Facebook OAuth Login
           </button>
         </div>
         <div class="form-group">
@@ -490,7 +538,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (topicVal) topicInput.value = topicVal.value;
     } else if (currentActiveNode === 'gemini') {
       const gKey = document.getElementById('mGeminiKey');
+      const gMod = document.getElementById('mGeminiModel');
+      const gTone = document.getElementById('mPromptTone');
+      const gHash = document.getElementById('mHashtagCount');
       if (gKey && gKey.value) cfgGeminiKey.value = gKey.value;
+      if (gMod) selectedGeminiModel = gMod.value;
+      if (gTone) selectedPromptTone = gTone.value;
+      if (gHash) selectedHashtagCount = gHash.value;
+    } else if (currentActiveNode === 'imagen') {
+      const iMod = document.getElementById('mImageModel');
+      const iRatio = document.getElementById('mAspectRatio');
+      const iStyle = document.getElementById('mArtStyle');
+      if (iMod) selectedImageModel = iMod.value;
+      if (iRatio) selectedAspectRatio = iRatio.value;
+      if (iStyle) selectedArtStyle = iStyle.value;
     } else if (currentActiveNode === 'facebook') {
       const pId = document.getElementById('mFbPageId');
       const pTok = document.getElementById('mFbToken');
@@ -506,11 +567,13 @@ document.addEventListener('DOMContentLoaded', () => {
       geminiApiKey: cfgGeminiKey.value.trim(),
       fbPageId: cfgFbPageId.value.trim(),
       fbAccessToken: cfgFbToken.value.trim(),
-      logSheetId: cfgSheetId.value.trim()
+      logSheetId: cfgSheetId.value.trim(),
+      geminiModel: selectedGeminiModel,
+      imageModel: selectedImageModel
     };
     localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(creds));
 
-    showToast('Step Saved', 'Step Settings successfully save ho gaye!', 'success');
+    showToast('Step Saved', `Step Settings saved! Models: ${selectedGeminiModel} & ${selectedImageModel}`, 'success');
     closeNodeModal();
   });
 
@@ -521,7 +584,9 @@ document.addEventListener('DOMContentLoaded', () => {
       geminiApiKey: cfgGeminiKey.value.trim(),
       fbPageId: cfgFbPageId.value.trim(),
       fbAccessToken: cfgFbToken.value.trim(),
-      logSheetId: cfgSheetId.value.trim()
+      logSheetId: cfgSheetId.value.trim(),
+      geminiModel: selectedGeminiModel,
+      imageModel: selectedImageModel
     };
 
     localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(creds));
@@ -579,13 +644,19 @@ document.addEventListener('DOMContentLoaded', () => {
       geminiApiKey: cfgGeminiKey.value.trim(),
       fbPageId: cfgFbPageId.value.trim(),
       fbAccessToken: cfgFbToken.value.trim(),
-      logSheetId: cfgSheetId.value.trim()
+      logSheetId: cfgSheetId.value.trim(),
+      geminiModel: selectedGeminiModel,
+      imageModel: selectedImageModel,
+      promptTone: selectedPromptTone,
+      hashtagCount: selectedHashtagCount,
+      aspectRatio: selectedAspectRatio,
+      artStyle: selectedArtStyle
     };
 
     resetWorkflowUI();
 
     setWorkflowNode('node-trigger', 'running', 'Active');
-    setLoadingState(true, 'AI Post Automation Process start ho raha hai...');
+    setLoadingState(true, `AI Post Automation Start (${selectedGeminiModel} + ${selectedImageModel})...`);
 
     let stepTimer = setTimeout(() => {
       setWorkflowNode('node-trigger', 'done', 'Completed');

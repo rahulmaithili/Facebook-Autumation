@@ -2,7 +2,8 @@
  * ==============================================================================
  * FACEBOOK AUTOMATION SYSTEM - GOOGLE APPS SCRIPT BACKEND (Code.gs)
  * ==============================================================================
- * Model Used: gemini-2.0-flash (Caption) & imagen-3.0-generate-002 (Image)
+ * Models Supported: gemini-2.0-flash, gemini-1.5-pro, gemini-2.5-flash,
+ *                   gemini-2.5-flash-image (Nano Banana), imagen-3.0-generate-002
  * Deployment: Deploy as Web App (Execute as: Me, Access: Anyone)
  * ==============================================================================
  */
@@ -124,14 +125,16 @@ function runAutomation(topic, payload) {
     Logger.log('🚀 Starting Automation Run... Topic: ' + (topic || 'Trending Topic'));
     const config = getConfig(payload);
 
-    // Step A: Generate Text Caption using Gemini 2.0 Flash
-    Logger.log('📝 Generating Caption via Gemini 2.0 Flash API...');
-    caption = generateContent(config, topic);
+    // Step A: Generate Text Caption using Selected Gemini Text Model
+    const geminiModel = payload.geminiModel || 'gemini-2.0-flash';
+    Logger.log(`📝 Generating Caption via ${geminiModel}...`);
+    caption = generateContent(config, topic, payload);
     Logger.log('✅ Caption Generated: ' + caption.substring(0, 100) + '...');
 
-    // Step B: Generate Image using Gemini / Imagen API
-    Logger.log('🎨 Generating Image via Imagen 3 / Gemini Image API...');
-    const imageBlob = generateImage(config, caption);
+    // Step B: Generate Image using Selected Image AI Model (Nano Banana / Imagen)
+    const imageModel = payload.imageModel || 'imagen-3.0-generate-002';
+    Logger.log(`🎨 Generating Image via ${imageModel}...`);
+    const imageBlob = generateImage(config, caption, payload);
     Logger.log('✅ Image Generated Successfully!');
 
     // Step C: Post Image & Caption to Facebook Page
@@ -147,13 +150,16 @@ function runAutomation(topic, payload) {
       message: 'Facebook Post published successfully!',
       caption: caption,
       postId: postId,
-      timestamp: startTime.toLocaleString()
+      timestamp: startTime.toLocaleString(),
+      modelsUsed: {
+        textModel: geminiModel,
+        imageModel: imageModel
+      }
     };
   } catch (error) {
     const errorMsg = error.message || error.toString();
     Logger.log('❌ Error in Automation Run: ' + errorMsg);
     
-    // Log Failure to Google Sheet
     try {
       const config = getConfig(payload);
       logResult('FAILED', caption || ('Error: ' + errorMsg), 'N/A', config);
@@ -170,24 +176,28 @@ function runAutomation(topic, payload) {
 /**
  * 4. GEMINI TEXT CAPTION GENERATION (generateContent)
  */
-function generateContent(config, topic) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${config.GEMINI_API_KEY}`;
+function generateContent(config, topic, payload) {
+  const model = (payload && payload.geminiModel) ? payload.geminiModel : 'gemini-2.0-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.GEMINI_API_KEY}`;
   
-  let promptText = 'Write an engaging, high-performing Facebook post caption.';
+  let promptText = payload && payload.promptStyle ? payload.promptStyle : 'Write an engaging, high-performing Facebook post caption.';
   if (topic && topic.trim() !== '') {
     promptText += ` The post should be focused on topic: "${topic.trim()}".`;
   } else {
     promptText += ` Pick an inspiring, trending, or highly educational digital lifestyle/tech/business topic.`;
   }
-  
+
+  const tone = (payload && payload.promptTone) ? payload.promptTone : 'Enthusiastic & Engaging';
+  const hashtagCount = (payload && payload.hashtagCount) ? payload.hashtagCount : '3 to 5';
+
   promptText += ` Instructions:
-  - Keep the tone friendly, enthusiastic, and compelling.
+  - Tone: ${tone}.
   - Include appropriate engaging emojis throughout the text.
-  - Include 3 to 5 relevant hashtags at the bottom.
+  - Include ${hashtagCount} relevant hashtags at the bottom.
   - Structure it neatly with short readable paragraphs.
   - Provide ONLY the post caption text ready to publish (no metadata, no intro text like "Here is your caption:").`;
 
-  const payload = {
+  const reqPayload = {
     "contents": [
       {
         "parts": [
@@ -204,7 +214,7 @@ function generateContent(config, topic) {
   const options = {
     "method": "post",
     "contentType": "application/json",
-    "payload": JSON.stringify(payload),
+    "payload": JSON.stringify(reqPayload),
     "muteHttpExceptions": true
   };
 
@@ -227,19 +237,54 @@ function generateContent(config, topic) {
 /**
  * 5. GEMINI / IMAGEN IMAGE GENERATION (generateImage)
  */
-function generateImage(config, captionText) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${config.GEMINI_API_KEY}`;
+function generateImage(config, captionText, payload) {
+  const model = (payload && payload.imageModel) ? payload.imageModel : 'imagen-3.0-generate-002';
+  const aspectRatio = (payload && payload.aspectRatio) ? payload.aspectRatio : '1:1';
+  const artStyle = (payload && payload.artStyle) ? payload.artStyle : 'Vibrant Graphic Illustration';
 
   const cleanSummary = captionText.replace(/[#\n\r]/g, ' ').substring(0, 200);
-  const imagePrompt = `High quality, modern, visually stunning digital graphic illustration representing: ${cleanSummary}. Vivid vibrant colors, 4k resolution, clean composition, social media artwork. No text overlays.`;
+  const imagePrompt = `High quality, modern ${artStyle} representing: ${cleanSummary}. Vivid vibrant colors, 4k resolution, clean composition, social media artwork. No text overlays.`;
 
-  const payload = {
+  if (model === 'gemini-2.5-flash-image') {
+    // Nano Banana / Gemini 2.5 Flash Image Multimodal Endpoint
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${config.GEMINI_API_KEY}`;
+    const reqPayload = {
+      "contents": [{
+        "parts": [{ "text": `Generate a 1:1 image artwork for: ${imagePrompt}` }]
+      }]
+    };
+    const options = {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(reqPayload),
+      "muteHttpExceptions": true
+    };
+    const response = UrlFetchApp.fetch(url, options);
+    const json = JSON.parse(response.getContentText());
+
+    if (json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts) {
+      for (const part of json.candidates[0].content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          const base64Data = part.inlineData.data;
+          const imageBytes = Utilities.base64Decode(base64Data);
+          return Utilities.newBlob(imageBytes, part.inlineData.mimeType || 'image/jpeg', 'facebook_post.jpg');
+        }
+      }
+    }
+    // Fallback to Imagen 3 if inlineData not present
+    Logger.log('⚠️ Nano Banana returned text, falling back to Imagen 3...');
+  }
+
+  // Standard Imagen 3 Endpoint
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${config.GEMINI_API_KEY}`;
+
+  const reqPayload = {
     "instances": [
       { "prompt": imagePrompt }
     ],
     "parameters": {
       "sampleCount": 1,
-      "aspectRatio": "1:1",
+      "aspectRatio": aspectRatio,
       "outputMimeType": "image/jpeg"
     }
   };
@@ -247,7 +292,7 @@ function generateImage(config, captionText) {
   const options = {
     "method": "post",
     "contentType": "application/json",
-    "payload": JSON.stringify(payload),
+    "payload": JSON.stringify(reqPayload),
     "muteHttpExceptions": true
   };
 
