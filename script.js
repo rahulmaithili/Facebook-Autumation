@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cancelModalBtn = document.getElementById('cancelModalBtn');
   const saveModalBtn = document.getElementById('saveModalBtn');
 
-  // Custom Prompt Input Modal Elements (Replaces native browser prompt)
+  // Custom Prompt Input Modal Elements
   const customPromptModal = document.getElementById('customPromptModal');
   const promptModalTitle = document.getElementById('promptModalTitle');
   const promptModalDesc = document.getElementById('promptModalDesc');
@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const STORAGE_KEY_CREDS = 'fb_automation_credentials';
   const STORAGE_KEY_SIDEBAR = 'fb_sidebar_collapsed';
   const DEFAULT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxQ-vbzy60GwVdAzpiF_Hq4-AOsrpEnQdWdFKJdaEXcrcOadGM9O47CPYxl0ENnaygF/exec';
+  const DEFAULT_FB_APP_ID = '966242223397117';
 
   let currentActiveNode = null;
   let promptCallback = null;
@@ -153,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 4500);
   }
 
-  // 3. ULTRA-PREMIUM CUSTOM PROMPT MODAL (Replaces native browser prompt)
+  // 3. ULTRA-PREMIUM CUSTOM PROMPT MODAL
   function openCustomPrompt(title, desc, placeholder, initialVal, onConfirm) {
     promptModalTitle.innerHTML = `<i class="fa-brands fa-facebook" style="color: var(--fb-blue);"></i> ${escapeHtml(title)}`;
     promptModalDesc.textContent = desc;
@@ -263,30 +264,12 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleConfigBtn.classList.toggle('active');
   });
 
-  // 5. FACEBOOK DIRECT OAUTH CONNECT HANDLER (Using Custom Modal)
+  // 5. FACEBOOK DIRECT CONNECT (Instant Login Popup without prompt modal)
   fbLoginBtn.addEventListener('click', handlePabblyFbConnect);
 
   function handlePabblyFbConnect() {
-    let appId = cfgFbAppId.value.trim();
-
-    if (!appId) {
-      openCustomPrompt(
-        "Facebook App ID Required",
-        "Direct OAuth login ke liye kripya apna Meta App ID enter karein:",
-        "e.g. 123456789012345",
-        "",
-        (enteredAppId) => {
-          if (enteredAppId && enteredAppId.trim()) {
-            cfgFbAppId.value = enteredAppId.trim();
-            launchFbOAuthPopup(enteredAppId.trim());
-          } else {
-            showToast('App ID Required', 'Facebook Direct Login ke liye Meta App ID zaroori hai.', 'warning');
-          }
-        }
-      );
-    } else {
-      launchFbOAuthPopup(appId);
-    }
+    const appId = cfgFbAppId.value.trim() || DEFAULT_FB_APP_ID;
+    launchFbOAuthPopup(appId);
   }
 
   function launchFbOAuthPopup(appId) {
@@ -315,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (popup && popup.closed) {
         clearInterval(checkPopupInt);
         fbLoginBtn.disabled = false;
-        fbLoginBtn.innerHTML = `<i class="fa-brands fa-facebook-f"></i> Connect Facebook Account`;
+        fbLoginBtn.innerHTML = `<i class="fa-brands fa-facebook-f"></i> Direct OAuth Login`;
       }
     }, 1000);
   }
@@ -337,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(err);
       showToast('Fetch Failed', 'Pages fetch error: ' + err.message, 'error');
       fbLoginBtn.disabled = false;
-      fbLoginBtn.innerHTML = `<i class="fa-brands fa-facebook-f"></i> Connect Facebook Account`;
+      fbLoginBtn.innerHTML = `<i class="fa-brands fa-facebook-f"></i> Direct OAuth Login`;
     }
   }
 
