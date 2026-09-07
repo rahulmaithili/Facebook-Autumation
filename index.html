@@ -207,20 +207,23 @@
       <section class="card config-panel-card hidden mb-4" id="configPanel">
         <div class="card-header flex-between">
           <h2><i class="fa-solid fa-sliders"></i> System Settings & Credentials</h2>
-          <span class="help-text">Pabbly / n8n Style Direct Facebook Connect!</span>
+          <span class="help-text">Direct Connect ya Quick Token Helper!</span>
         </div>
         <div class="card-body">
 
-          <!-- Pabbly / n8n Style Direct OAuth Login Banner -->
+          <!-- Direct Facebook Connect Banner -->
           <div class="fb-login-banner mb-4">
             <div class="fb-login-info">
-              <h3><i class="fa-brands fa-facebook"></i> Direct Facebook Connect</h3>
-              <p>Facebook account connect karke 1-click me Page ID aur Page Access Token automatic fetch karein.</p>
+              <h3><i class="fa-brands fa-facebook"></i> Connect Facebook Page</h3>
+              <p>Direct Login OAuth ya Meta Explorer Token se 30 sec me connect karein.</p>
             </div>
-            <div class="fb-login-action">
+            <div class="fb-login-action flex-between gap-2">
               <button id="fbLoginBtn" class="btn btn-facebook">
-                <i class="fa-brands fa-facebook-f"></i> Connect Facebook Account
+                <i class="fa-brands fa-facebook-f"></i> Direct OAuth Login
               </button>
+              <a href="https://developers.facebook.com/tools/explorer/" target="_blank" class="btn btn-outline" style="background:#fff; color:#1877f2;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Get Token (30 Sec Helper)
+              </a>
             </div>
           </div>
 
@@ -396,7 +399,7 @@
     </div>
   </div>
 
-  <!-- Ultra-Premium Custom Input Prompt Modal (Replaces Native browser prompt) -->
+  <!-- Ultra-Premium Custom Input Prompt Modal -->
   <div class="modal-overlay hidden" id="customPromptModal">
     <div class="modal-card custom-prompt-card">
       <div class="modal-header">
@@ -408,7 +411,7 @@
         <div class="form-group mt-3">
           <label for="promptInputVal"><i class="fa-solid fa-cubes"></i> Meta App ID</label>
           <input type="text" id="promptInputVal" placeholder="e.g. 123456789012345">
-          <small class="help-text">Agar App ID nahi hai, toh developers.facebook.com par App banayein.</small>
+          <small class="help-text">Agar App ID nahi hai, toh developers.facebook.com par App banayein ya Token direct paste karein.</small>
         </div>
       </div>
       <div class="modal-footer">
