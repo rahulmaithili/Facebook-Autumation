@@ -27,9 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const STORAGE_KEY = 'fb_automation_webapp_url';
 
   // 1. Initialize Saved Web App URL
+  const DEFAULT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxQ-vbzy60GwVdAzpiF_Hq4-AOsrpEnQdWdFKJdaEXcrcOadGM9O47CPYxl0ENnaygF/exec';
   const savedUrl = localStorage.getItem(STORAGE_KEY);
   if (savedUrl) {
     webAppUrlInput.value = savedUrl;
+  } else if (!webAppUrlInput.value) {
+    webAppUrlInput.value = DEFAULT_WEBAPP_URL;
   }
 
   // Save URL when changed
