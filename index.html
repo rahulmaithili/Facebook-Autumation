@@ -129,10 +129,39 @@
     <section class="card config-panel-card hidden" id="configPanel">
       <div class="card-header flex-between">
         <h2><i class="fa-solid fa-sliders"></i> Custom API Credentials Setup</h2>
-        <span class="help-text">Directly input API keys here - No need to edit Apps Script code!</span>
+        <span class="help-text">1-Click Facebook Login ya manual keys fill karein!</span>
       </div>
       <div class="card-body">
+
+        <!-- 1-Click Facebook Direct Login Card -->
+        <div class="fb-login-banner mb-4">
+          <div class="fb-login-info">
+            <h3><i class="fa-brands fa-facebook"></i> Direct 1-Click Facebook Connect</h3>
+            <p>Apne Facebook Account se login karke Page Access Token aur Page ID automatic fetch karein.</p>
+          </div>
+          <div class="fb-login-action">
+            <button id="fbLoginBtn" class="btn btn-facebook">
+              <i class="fa-brands fa-facebook-f"></i> Connect Facebook Page
+            </button>
+          </div>
+        </div>
+
+        <!-- Page Selector Dropdown (Shown after FB Login) -->
+        <div id="pageSelectContainer" class="form-group span-2 hidden">
+          <label for="fbPageSelect"><i class="fa-solid fa-flag"></i> Select Facebook Page to Automate</label>
+          <select id="fbPageSelect" class="form-select">
+            <option value="">-- Choose Facebook Page --</option>
+          </select>
+        </div>
+
+        <div class="divider"></div>
+
         <div class="credentials-grid">
+          <div class="form-group">
+            <label for="cfgFbAppId"><i class="fa-solid fa-cubes"></i> Facebook App ID (Optional for SDK)</label>
+            <input type="text" id="cfgFbAppId" placeholder="e.g. 123456789012345">
+          </div>
+
           <div class="form-group">
             <label for="cfgGeminiKey"><i class="fa-solid fa-key"></i> Gemini API Key</label>
             <div class="input-with-icon">
@@ -147,7 +176,7 @@
           </div>
 
           <div class="form-group span-2">
-            <label for="cfgFbToken"><i class="fa-solid fa-shield-halved"></i> Facebook Page Access Token (60-Day Long Lived)</label>
+            <label for="cfgFbToken"><i class="fa-solid fa-shield-halved"></i> Facebook Page Access Token</label>
             <div class="input-with-icon">
               <input type="password" id="cfgFbToken" placeholder="EAAX...">
               <button class="toggle-pwd-btn" data-target="cfgFbToken"><i class="fa-solid fa-eye"></i></button>
@@ -270,6 +299,8 @@
     </footer>
   </div>
 
+  <!-- Facebook SDK for JS -->
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

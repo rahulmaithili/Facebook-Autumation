@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
  * FACEBOOK AUTOMATION DASHBOARD - JAVASCRIPT LOGIC (script.js)
- * Plain Vanilla JS with Interactive Workflow Diagram & Dynamic Credentials
+ * Plain Vanilla JS with Interactive Workflow Diagram, FB SDK 1-Click Login & Dynamic Credentials
  * ==============================================================================
  */
 
@@ -15,8 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggleConfigBtn = document.getElementById('toggleConfigBtn');
   const configPanel = document.getElementById('configPanel');
   const saveCredentialsBtn = document.getElementById('saveCredentialsBtn');
+  const fbLoginBtn = document.getElementById('fbLoginBtn');
+  const pageSelectContainer = document.getElementById('pageSelectContainer');
+  const fbPageSelect = document.getElementById('fbPageSelect');
   
   // Custom Credentials Inputs
+  const cfgFbAppId = document.getElementById('cfgFbAppId');
   const cfgGeminiKey = document.getElementById('cfgGeminiKey');
   const cfgFbPageId = document.getElementById('cfgFbPageId');
   const cfgFbToken = document.getElementById('cfgFbToken');
@@ -56,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (savedCredsRaw) {
     try {
       const savedCreds = JSON.parse(savedCredsRaw);
+      if (savedCreds.fbAppId) cfgFbAppId.value = savedCreds.fbAppId;
       if (savedCreds.geminiApiKey) cfgGeminiKey.value = savedCreds.geminiApiKey;
       if (savedCreds.fbPageId) cfgFbPageId.value = savedCreds.fbPageId;
       if (savedCreds.fbAccessToken) cfgFbToken.value = savedCreds.fbAccessToken;
@@ -83,9 +88,107 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleConfigBtn.classList.toggle('active');
   });
 
+  // 2. FACEBOOK SDK 1-CLICK DIRECT LOGIN INTEGRATION
+  window.fbAsyncInit = function() {
+    const appId = cfgFbAppId.value.trim() || '966242223397117'; // Fallback default Meta App ID
+    if (window.FB) {
+      window.FB.init({
+        appId      : appId,
+        cookie     : true,
+        xfbml      : true,
+        version    : 'v20.0'
+      });
+    }
+  };
+
+  fbLoginBtn.addEventListener('click', () => {
+    const appId = cfgFbAppId.value.trim() || '966242223397117';
+
+    if (!window.FB) {
+      alert('Facebook SDK load ho raha hai... Kripya 2 seconds baad click karein.');
+      return;
+    }
+
+    window.FB.init({
+      appId      : appId,
+      cookie     : true,
+      xfbml      : true,
+      version    : 'v20.0'
+    });
+
+    fbLoginBtn.disabled = true;
+    fbLoginBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Connecting Facebook...`;
+
+    window.FB.login(function(response) {
+      if (response.authResponse) {
+        // Fetch user's managed Facebook Pages
+        window.FB.api('/me/accounts', function(pagesResponse) {
+          fbLoginBtn.disabled = false;
+          fbLoginBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Facebook Connected!`;
+
+          if (pagesResponse && pagesResponse.data && pagesResponse.data.length > 0) {
+            populateFbPagesDropdown(pagesResponse.data);
+          } else {
+            alert('Aapke Facebook Account me koi managed Page nahi mila ya permission reject ho gayi.');
+          }
+        });
+      } else {
+        fbLoginBtn.disabled = false;
+        fbLoginBtn.innerHTML = `<i class="fa-brands fa-facebook-f"></i> Connect Facebook Page`;
+        alert('Facebook Login cancel kar diya gaya ya authorization error aaya.');
+      }
+    }, {
+      scope: 'pages_manage_posts,pages_read_engagement,pages_show_list'
+    });
+  });
+
+  function populateFbPagesDropdown(pages) {
+    pageSelectContainer.classList.remove('hidden');
+    fbPageSelect.innerHTML = `<option value="">-- Choose Facebook Page --</option>`;
+
+    pages.forEach(page => {
+      const option = document.createElement('option');
+      option.value = page.id;
+      option.textContent = `${page.name} (ID: ${page.id})`;
+      option.dataset.token = page.access_token;
+      fbPageSelect.appendChild(option);
+    });
+
+    // Auto-select first page if available
+    if (pages.length > 0) {
+      fbPageSelect.selectedIndex = 1;
+      applySelectedPage(pages[0].id, pages[0].access_token);
+    }
+
+    fbPageSelect.addEventListener('change', () => {
+      const selectedOpt = fbPageSelect.options[fbPageSelect.selectedIndex];
+      if (selectedOpt && selectedOpt.value) {
+        applySelectedPage(selectedOpt.value, selectedOpt.dataset.token);
+      }
+    });
+  }
+
+  function applySelectedPage(pageId, pageAccessToken) {
+    cfgFbPageId.value = pageId;
+    cfgFbToken.value = pageAccessToken;
+    
+    // Save credentials automatically
+    const creds = {
+      fbAppId: cfgFbAppId.value.trim(),
+      geminiApiKey: cfgGeminiKey.value.trim(),
+      fbPageId: pageId,
+      fbAccessToken: pageAccessToken,
+      logSheetId: cfgSheetId.value.trim()
+    };
+    localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(creds));
+    
+    alert(`✅ Facebook Page Connected: ${pageId}\nPage Access Token aur Page ID automatic fill & save ho gaye!`);
+  }
+
   // Save Credentials Button Handler
   saveCredentialsBtn.addEventListener('click', async () => {
     const creds = {
+      fbAppId: cfgFbAppId.value.trim(),
       geminiApiKey: cfgGeminiKey.value.trim(),
       fbPageId: cfgFbPageId.value.trim(),
       fbAccessToken: cfgFbToken.value.trim(),
@@ -127,12 +230,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 2. Fetch Logs automatically on page load
+  // 3. Fetch Logs automatically on page load
   if (webAppUrlInput.value.trim()) {
     fetchLogs();
   }
 
-  // 3. Automation Execution & Workflow Node Animation
+  // 4. Automation Execution & Workflow Node Animation
   generateBtn.addEventListener('click', async () => {
     const webAppUrl = webAppUrlInput.value.trim();
     const topic = topicInput.value.trim();
@@ -150,14 +253,11 @@ document.addEventListener('DOMContentLoaded', () => {
       logSheetId: cfgSheetId.value.trim()
     };
 
-    // Reset Workflow UI Nodes
     resetWorkflowUI();
 
-    // Step 1: Trigger Node Active
     setWorkflowNode('node-trigger', 'running', 'Active');
     setLoadingState(true, 'AI Post Automation Process start ho raha hai...');
 
-    // Simulate animated node step progression
     let stepTimer = setTimeout(() => {
       setWorkflowNode('node-trigger', 'done', 'Completed');
       setWorkflowNode('node-gemini', 'running', 'Generating...');
@@ -200,7 +300,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await response.json();
 
       if (result.status === 'success') {
-        // Mark all Workflow Nodes as Completed
         setWorkflowNode('node-trigger', 'done', 'Completed');
         setWorkflowNode('node-gemini', 'done', 'Caption Ready');
         setWorkflowNode('node-imagen', 'done', 'Artwork Ready');
@@ -216,7 +315,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         fetchLogs();
       } else {
-        // Mark failed node
         setWorkflowNode('node-gemini', 'failed', 'Error');
         setErrorState('Automation Failed', result.message || 'Ek error aaya.');
       }
@@ -232,12 +330,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Refresh Logs Event Listener
   refreshLogsBtn.addEventListener('click', () => {
     fetchLogs();
   });
 
-  // Helper Function: Fetch Logs from Backend
   async function fetchLogs() {
     const webAppUrl = webAppUrlInput.value.trim();
     if (!webAppUrl) return;
@@ -288,7 +384,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Render Table
   function renderLogsTable(logs) {
     if (!logs || logs.length === 0) {
       logsTableBody.innerHTML = `
@@ -318,7 +413,6 @@ document.addEventListener('DOMContentLoaded', () => {
     logsTableBody.innerHTML = rowsHtml;
   }
 
-  // Workflow Diagram Helpers
   function resetWorkflowUI() {
     document.querySelectorAll('.wf-node').forEach(node => {
       node.className = 'wf-node';
@@ -349,7 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // UI State Helpers
   function setLoadingState(isLoading, message = '') {
     if (isLoading) {
       generateBtn.disabled = true;
