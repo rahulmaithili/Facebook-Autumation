@@ -9,8 +9,6 @@
 
 /**
  * 1. ONE-TIME CONFIGURATION SETUP
- * Apps Script Editor mein is function ko ek baar select karke "Run" karein
- * taaki aapke sensitive keys PropertiesService mein secure store ho sakein.
  */
 function setupScriptProperties() {
   const scriptProperties = PropertiesService.getScriptProperties();
@@ -18,33 +16,43 @@ function setupScriptProperties() {
     'GEMINI_API_KEY': 'YOUR_GEMINI_API_KEY_HERE',
     'FB_PAGE_ID': 'YOUR_FACEBOOK_PAGE_ID_HERE',
     'FB_PAGE_ACCESS_TOKEN': 'YOUR_FACEBOOK_PAGE_ACCESS_TOKEN_HERE',
-    'LOG_SHEET_ID': '1DfQmhNSSGV5dZnlI2-eD-V8-E0h5FJM7o1EoleNiA5OwMcNZY9UkG_sI' // User's Google Sheet ID
+    'LOG_SHEET_ID': '1DfQmhNSSGV5dZnlI2-eD-V8-E0h5FJM7o1EoleNiA5OwMcNZY9UkG_sI'
   });
   Logger.log('✅ Configuration Properties successfully saved!');
 }
 
 /**
- * Helper: Script Properties fetch karne ke liye
+ * Helper: Script Properties fetch karne ke liye (supports request payload overrides)
  */
-function getConfig() {
-  const props = PropertiesService.getScriptProperties().getProperties();
-  
-  if (!props.GEMINI_API_KEY || props.GEMINI_API_KEY.includes('YOUR_GEMINI')) {
-    throw new Error('GEMINI_API_KEY configured nahi hai! Pehle setupScriptProperties() run karein.');
+function getConfig(payload) {
+  const props = PropertiesService.getScriptProperties().getProperties() || {};
+  const p = payload || {};
+
+  const geminiKey = p.geminiApiKey || p.GEMINI_API_KEY || props.GEMINI_API_KEY;
+  const fbPageId = p.fbPageId || p.FB_PAGE_ID || props.FB_PAGE_ID;
+  const fbToken = p.fbAccessToken || p.FB_PAGE_ACCESS_TOKEN || props.FB_PAGE_ACCESS_TOKEN;
+  const sheetId = p.logSheetId || p.LOG_SHEET_ID || props.LOG_SHEET_ID || '1DfQmhNSSGV5dZnlI2-eD-V8-E0h5FJM7o1EoleNiA5OwMcNZY9UkG_sI';
+
+  if (!geminiKey || geminiKey.includes('YOUR_GEMINI')) {
+    throw new Error('GEMINI_API_KEY configured nahi hai! Dashboard me API Key enter karein ya setupScriptProperties() run karein.');
   }
-  if (!props.FB_PAGE_ID || props.FB_PAGE_ID.includes('YOUR_FACEBOOK')) {
-    throw new Error('FB_PAGE_ID configured nahi hai! Pehle setupScriptProperties() run karein.');
+  if (!fbPageId || fbPageId.includes('YOUR_FACEBOOK')) {
+    throw new Error('FB_PAGE_ID configured nahi hai! Dashboard me Page ID enter karein ya setupScriptProperties() run karein.');
   }
-  if (!props.FB_PAGE_ACCESS_TOKEN || props.FB_PAGE_ACCESS_TOKEN.includes('YOUR_FACEBOOK')) {
-    throw new Error('FB_PAGE_ACCESS_TOKEN configured nahi hai! Pehle setupScriptProperties() run karein.');
+  if (!fbToken || fbToken.includes('YOUR_FACEBOOK')) {
+    throw new Error('FB_PAGE_ACCESS_TOKEN configured nahi hai! Dashboard me Access Token enter karein ya setupScriptProperties() run karein.');
   }
-  
-  return props;
+
+  return {
+    GEMINI_API_KEY: geminiKey.trim(),
+    FB_PAGE_ID: fbPageId.trim(),
+    FB_PAGE_ACCESS_TOKEN: fbToken.trim(),
+    LOG_SHEET_ID: sheetId.trim()
+  };
 }
 
 /**
  * 2. WEB APP ENDPOINTS (doGet & doPost)
- * Frontend se aane wali requests handle karne ke liye.
  */
 function doGet(e) {
   try {
@@ -73,13 +81,20 @@ function doPost(e) {
     }
 
     const action = payload.action || (e && e.parameter && e.parameter.action) || 'run_automation';
-    
-    if (action === 'run_automation') {
+
+    if (action === 'save_config') {
+      const scriptProperties = PropertiesService.getScriptProperties();
+      if (payload.geminiApiKey) scriptProperties.setProperty('GEMINI_API_KEY', payload.geminiApiKey.trim());
+      if (payload.fbPageId) scriptProperties.setProperty('FB_PAGE_ID', payload.fbPageId.trim());
+      if (payload.fbAccessToken) scriptProperties.setProperty('FB_PAGE_ACCESS_TOKEN', payload.fbAccessToken.trim());
+      if (payload.logSheetId) scriptProperties.setProperty('LOG_SHEET_ID', payload.logSheetId.trim());
+      return jsonResponse({ status: 'success', message: '✅ API Credentials Apps Script Properties me save ho gaye!' });
+    } else if (action === 'run_automation') {
       const topic = payload.topic || (e && e.parameter && e.parameter.topic) || '';
-      const result = runAutomation(topic);
+      const result = runAutomation(topic, payload);
       return jsonResponse(result);
     } else if (action === 'get_logs') {
-      const logs = getLogs();
+      const logs = getLogs(payload);
       return jsonResponse({ status: 'success', data: logs });
     } else {
       return jsonResponse({ status: 'error', message: 'Invalid action specified: ' + action });
@@ -100,14 +115,14 @@ function jsonResponse(data) {
 /**
  * 3. MAIN AUTOMATION FLOW (runAutomation)
  */
-function runAutomation(topic) {
+function runAutomation(topic, payload) {
   const startTime = new Date();
   let caption = '';
   let postId = '';
 
   try {
     Logger.log('🚀 Starting Automation Run... Topic: ' + (topic || 'Trending Topic'));
-    const config = getConfig();
+    const config = getConfig(payload);
 
     // Step A: Generate Text Caption using Gemini 2.0 Flash
     Logger.log('📝 Generating Caption via Gemini 2.0 Flash API...');
@@ -125,7 +140,7 @@ function runAutomation(topic) {
     Logger.log('🎉 Successfully posted to Facebook! Post ID: ' + postId);
 
     // Step D: Log Success Result to Google Sheet
-    logResult('SUCCESS', caption, postId);
+    logResult('SUCCESS', caption, postId, config);
 
     return {
       status: 'success',
@@ -139,7 +154,10 @@ function runAutomation(topic) {
     Logger.log('❌ Error in Automation Run: ' + errorMsg);
     
     // Log Failure to Google Sheet
-    logResult('FAILED', caption || ('Error: ' + errorMsg), 'N/A');
+    try {
+      const config = getConfig(payload);
+      logResult('FAILED', caption || ('Error: ' + errorMsg), 'N/A', config);
+    } catch(e) {}
 
     return {
       status: 'error',
@@ -210,10 +228,8 @@ function generateContent(config, topic) {
  * 5. GEMINI / IMAGEN IMAGE GENERATION (generateImage)
  */
 function generateImage(config, captionText) {
-  // Imagen 3 model prediction endpoint
   const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${config.GEMINI_API_KEY}`;
 
-  // Image prompt derived from caption text
   const cleanSummary = captionText.replace(/[#\n\r]/g, ' ').substring(0, 200);
   const imagePrompt = `High quality, modern, visually stunning digital graphic illustration representing: ${cleanSummary}. Vivid vibrant colors, 4k resolution, clean composition, social media artwork. No text overlays.`;
 
@@ -289,15 +305,17 @@ function postToFacebook(config, imageBlob, caption) {
 /**
  * 7. GOOGLE SHEET LOGGING (logResult & getOrCreateLogSheet)
  */
-function getOrCreateLogSheet() {
-  const config = PropertiesService.getScriptProperties().getProperties();
+function getOrCreateLogSheet(configOverride) {
+  const props = PropertiesService.getScriptProperties().getProperties() || {};
+  const sheetId = (configOverride && configOverride.LOG_SHEET_ID) || props.LOG_SHEET_ID || '1DfQmhNSSGV5dZnlI2-eD-V8-E0h5FJM7o1EoleNiA5OwMcNZY9UkG_sI';
+  
   let spreadsheet;
 
-  if (config.LOG_SHEET_ID && config.LOG_SHEET_ID.trim() !== '') {
+  if (sheetId && sheetId.trim() !== '') {
     try {
-      spreadsheet = SpreadsheetApp.openById(config.LOG_SHEET_ID.trim());
+      spreadsheet = SpreadsheetApp.openById(sheetId.trim());
     } catch (e) {
-      Logger.log('⚠️ Configured LOG_SHEET_ID invalid tha. Naya spreadsheet open/create kar rahe hain.');
+      Logger.log('⚠️ Configured LOG_SHEET_ID invalid tha.');
     }
   }
 
@@ -312,7 +330,6 @@ function getOrCreateLogSheet() {
   if (!spreadsheet) {
     spreadsheet = SpreadsheetApp.create('Facebook Automation Logs');
     PropertiesService.getScriptProperties().setProperty('LOG_SHEET_ID', spreadsheet.getId());
-    Logger.log('✨ Naya Spreadsheet Banaya Gaya ID: ' + spreadsheet.getId());
   }
 
   const sheetName = 'Facebook_Automation_Logs';
@@ -320,9 +337,7 @@ function getOrCreateLogSheet() {
 
   if (!sheet) {
     sheet = spreadsheet.insertSheet(sheetName);
-    // Header Row add karein
     sheet.appendRow(['Timestamp', 'Status', 'Caption', 'Post ID']);
-    // Style Header Row
     const headerRange = sheet.getRange(1, 1, 1, 4);
     headerRange.setBackground('#1877f2');
     headerRange.setFontColor('#ffffff');
@@ -333,35 +348,30 @@ function getOrCreateLogSheet() {
   return sheet;
 }
 
-function logResult(status, caption, postId) {
+function logResult(status, caption, postId, configOverride) {
   try {
-    const sheet = getOrCreateLogSheet();
+    const sheet = getOrCreateLogSheet(configOverride);
     const timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
-    
-    // Shorten long caption for clean sheet view
     const shortCaption = caption ? (caption.length > 250 ? caption.substring(0, 250) + '...' : caption) : 'N/A';
-    
     sheet.appendRow([timestamp, status, shortCaption, postId]);
   } catch (err) {
     Logger.log('⚠️ Sheet me log entry append karne me error: ' + err.toString());
   }
 }
 
-function getLogs() {
+function getLogs(payload) {
   try {
-    const sheet = getOrCreateLogSheet();
+    const sheet = getOrCreateLogSheet(payload);
     const lastRow = sheet.getLastRow();
     
     if (lastRow <= 1) {
-      return []; // Return empty array if only header row exists
+      return [];
     }
 
-    // Read last 50 entries
     const startRow = Math.max(2, lastRow - 49);
     const numRows = lastRow - startRow + 1;
     const values = sheet.getRange(startRow, 1, numRows, 4).getValues();
 
-    // Formatting for JSON output
     const logs = values.map(row => {
       let tsFormatted = row[0];
       if (row[0] instanceof Date) {
@@ -375,7 +385,6 @@ function getLogs() {
       };
     });
 
-    // Reverse so newest logs appear first
     return logs.reverse();
   } catch (err) {
     Logger.log('⚠️ Logs fetch karne me error: ' + err.toString());
@@ -385,7 +394,6 @@ function getLogs() {
 
 /**
  * 8. TIME-DRIVEN TRIGGER FUNCTION (scheduledRun)
- * Automatically schedule hone par ye function chalega without frontend trigger.
  */
 function scheduledRun() {
   Logger.log('⏰ Scheduled Automated Trigger Fired!');
@@ -397,7 +405,6 @@ function scheduledRun() {
     'Creative Coding & Technology Trends'
   ];
   
-  // Randomly select topic
   const randomTopic = topics[Math.floor(Math.random() * topics.length)];
   return runAutomation(randomTopic);
 }
