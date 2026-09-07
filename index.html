@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facebook Automation Dashboard</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="main-header">
+      <div class="logo-area">
+        <div class="fb-icon-box">
+          <i class="fa-brands fa-facebook-f"></i>
+        </div>
+        <div>
+          <h1>Facebook Automation Dashboard</h1>
+          <p class="subtitle">AI Content & Image Generation with Automatic Facebook Page Publishing</p>
+        </div>
+      </div>
+      <div class="status-badge" id="systemStatus">
+        <span class="dot pulse"></span> Web App Ready
+      </div>
+    </header>
+
+    <!-- App Content Grid -->
+    <main class="dashboard-grid">
+
+      <!-- Left Column: Settings & Controls -->
+      <section class="card control-card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-sliders"></i> System Configuration</h2>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label for="webAppUrl"><i class="fa-solid fa-link"></i> Apps Script Web App URL</label>
+            <input type="url" id="webAppUrl" placeholder="https://script.google.com/macros/s/.../exec" required>
+            <small class="help-text">Google Apps Script se deploy hua Web App URL yahan paste karein.</small>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="card-header p-0">
+            <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Create New Facebook Post</h2>
+          </div>
+          
+          <div class="form-group mt-3">
+            <label for="topicInput"><i class="fa-solid fa-lightbulb"></i> Post Topic (Optional)</label>
+            <input type="text" id="topicInput" placeholder="e.g. 5 AI tools that boost productivity, Daily Motivation...">
+            <small class="help-text">Agar aap topic blank chhodenge toh AI automatic trending topic choose karega.</small>
+          </div>
+
+          <button id="generateBtn" class="btn btn-primary btn-block">
+            <i class="fa-solid fa-paper-plane"></i> Generate & Post Now
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Column: Live Status & Output -->
+      <section class="card status-card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-chart-line"></i> Execution Status</h2>
+        </div>
+        <div class="card-body">
+          <div id="statusBox" class="status-box idle">
+            <div class="status-icon">
+              <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <div class="status-details">
+              <h3 id="statusTitle">Ready for Automation</h3>
+              <p id="statusMessage">Topic enter karein aur "Generate & Post Now" par click karein.</p>
+            </div>
+          </div>
+
+          <!-- Generated Content Preview Box (Hidden initially) -->
+          <div id="resultPreview" class="result-preview hidden">
+            <div class="preview-header">
+              <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Published</span>
+              <span class="post-id-badge" id="previewPostId">Post ID: -</span>
+            </div>
+            <div class="preview-body">
+              <label><i class="fa-solid fa-align-left"></i> Generated Caption:</label>
+              <pre id="previewCaption" class="caption-text"></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Full Width Row: Automation Logs -->
+      <section class="card logs-card">
+        <div class="card-header flex-between">
+          <h2><i class="fa-solid fa-clock-rotate-left"></i> Execution Logs (Google Sheets)</h2>
+          <button id="refreshLogsBtn" class="btn btn-secondary">
+            <i class="fa-solid fa-rotate-right"></i> Refresh Logs
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="logs-table">
+              <thead>
+                <tr>
+                  <th style="width: 180px;">Time</th>
+                  <th style="width: 110px;">Status</th>
+                  <th>Caption / Message</th>
+                  <th style="width: 200px;">Post ID</th>
+                </tr>
+              </thead>
+              <tbody id="logsTableBody">
+                <tr>
+                  <td colspan="4" class="text-center py-4">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Loading logs from backend...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+      <p>Facebook Automation Dashboard &bull; Powered by Google Gemini AI & Apps Script</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
